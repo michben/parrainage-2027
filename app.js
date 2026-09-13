@@ -427,10 +427,13 @@ function renderPresidentsTimeline() {
 
   wrap.innerHTML = FORMER_PRESIDENTS.map(p => {
     const initials = p.nom.split(' ').map(w => w[0]).join('').slice(-2).toUpperCase();
+    const avatar = p.photo
+      ? `<img class="president-avatar" style="object-fit:cover" src="${p.photo}" alt="${p.nom}" loading="lazy" onerror="handleAvatarError(this,'${initials}','${p.couleur}')">`
+      : `<div class="president-avatar" style="background:${p.couleur}">${initials}</div>`;
     return `
       <div class="president-item">
         <div class="president-dot" style="background:${p.couleur}"></div>
-        <div class="president-avatar" style="background:${p.couleur}">${initials}</div>
+        ${avatar}
         <div class="president-info">
           <div class="president-name">${p.nom}</div>
           <div class="president-party">${p.parti}</div>
