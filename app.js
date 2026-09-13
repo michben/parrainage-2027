@@ -419,6 +419,29 @@ function hideProgressTooltip() {
 }
 
 // ============================================================
+// 5ter. FRISE DES PRÉSIDENTS DE LA VE RÉPUBLIQUE
+// ============================================================
+function renderPresidentsTimeline() {
+  const wrap = document.getElementById('presidentsTimeline');
+  if (!wrap || typeof FORMER_PRESIDENTS === 'undefined') return;
+
+  wrap.innerHTML = FORMER_PRESIDENTS.map(p => {
+    const initials = p.nom.split(' ').map(w => w[0]).join('').slice(-2).toUpperCase();
+    return `
+      <div class="president-item">
+        <div class="president-dot" style="background:${p.couleur}"></div>
+        <div class="president-avatar" style="background:${p.couleur}">${initials}</div>
+        <div class="president-info">
+          <div class="president-name">${p.nom}</div>
+          <div class="president-party">${p.parti}</div>
+          <div class="president-date">Élu le ${p.dateElection}</div>
+          ${p.note ? `<div class="president-note">${p.note}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ============================================================
 // 6. FILTRES
 // ============================================================
 document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -490,6 +513,7 @@ async function init() {
   renderCandidates();
   renderComparisonTable();
   renderProgressChart();
+  renderPresidentsTimeline();
   renderFooter();
 
   const cands = getActiveCandidates();

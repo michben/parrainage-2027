@@ -878,6 +878,58 @@ a:hover { text-decoration: underline; }
 .quiz-explain-detail { color: var(--text-muted); font-size: 12px; }
 .quiz-disclaimer { font-size: 11px; color: var(--text-faint); margin-top: 14px; }
 
+/* --- Frise des presidents de la Ve Republique --- */
+.presidents-timeline {
+  position: relative;
+  max-width: 760px;
+  margin: 0 auto;
+  padding-left: 28px;
+}
+.presidents-timeline::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--border);
+}
+.president-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding-bottom: 24px;
+}
+.president-item:last-child { padding-bottom: 0; }
+.president-dot {
+  position: absolute;
+  left: -28px;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-elevated);
+  box-shadow: 0 0 0 1px var(--border);
+}
+.president-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.president-info { flex: 1; min-width: 0; }
+.president-name { font-family: var(--font-display); font-size: 16px; }
+.president-party { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.president-date { font-size: 12px; font-weight: 600; color: var(--color-primary); margin-top: 4px; }
+.president-note { font-size: 11px; color: var(--text-faint); margin-top: 4px; font-style: italic; }
+
 /* --- Responsive --- */
 
 /* Tablette : deux colonnes (candidats + carte), stats en pleine largeur dessous */
