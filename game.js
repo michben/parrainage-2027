@@ -58,37 +58,151 @@ let solvedWords = new Set();
 const savedUsername = localStorage.getItem('gameUsername') || '';
 document.getElementById('usernameInput').value = savedUsername;
 
+let currentAccount = null; // profil du compte connecte (null si pseudo libre)
+const DEFAULT_AVATAR_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect width="40" height="40" rx="20" fill="%23ccd6df"/><circle cx="20" cy="15" r="7" fill="%238b9aa8"/><path d="M6 36c1-9 9-14 14-14s13 5 14 14" fill="%238b9aa8"/></svg>'
+);
+
 function authHeaders() {
   return authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
 }
 
-function proceedToSetup(name, accountBadge) {
+// --- Badges de parti : derives des candidats (une entree par parti distinct) ---
+const PARTY_BADGES = (() => {
+  if (typeof CANDIDATES === 'undefined') return [];
+  const seen = new Map();
+  CANDIDATES.forEach(c => { if (!seen.has(c.parti)) seen.set(c.parti, c.couleur); });
+  return Array.from(seen, ([parti, couleur]) => ({ parti, couleur }));
+})();
+
+function renderBadgeGrid(selected) {
+  const grid = document.getElementById('profileBadgeGrid');
+  grid.innerHTML = `<button type="button" class="profile-badge-option${!selected ? ' active' : ''}" data-parti="">Aucun</button>` +
+    PARTY_BADGES.map(b => `
+      <button type="button" class="profile-badge-option${selected === b.parti ? ' active' : ''}" data-parti="${b.parti}" style="--badge-color:${b.couleur}">
+        <span class="profile-badge-dot" style="background:${b.couleur}"></span>${b.parti}
+      </button>`).join('');
+  grid.querySelectorAll('.profile-badge-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      grid.querySelectorAll('.profile-badge-option').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+}
+
+function getSelectedBadge() {
+  const active = document.querySelector('#profileBadgeGrid .profile-badge-option.active');
+  return active && active.dataset.parti ? active.dataset.parti : null;
+}
+
+function badgeColorFor(parti) {
+  const found = PARTY_BADGES.find(b => b.parti === parti);
+  return found ? found.couleur : '#8b9aa8';
+}
+
+function openOnboarding() {
+  const account = currentAccount || {};
+  document.getElementById('profilePseudoInput').value = account.displayName || '';
+  document.getElementById('profileAvatarPreview').src = account.avatarDataUri || DEFAULT_AVATAR_SVG;
+  document.getElementById('profileSkipBtn').hidden = !!account.profileComplete;
+  renderBadgeGrid(account.partyBadge || null);
+  document.getElementById('profileStatus').textContent = '';
+  showScreen('screenOnboarding');
+}
+
+document.getElementById('profileAvatarBtn').addEventListener('click', () => {
+  document.getElementById('profileAvatarFile').click();
+});
+document.getElementById('profileAvatarFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxSide = 160;
+      const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      document.getElementById('profileAvatarPreview').src = canvas.toDataURL('image/jpeg', 0.82);
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+async function saveProfile() {
+  const statusEl = document.getElementById('profileStatus');
+  const pseudo = document.getElementById('profilePseudoInput').value.trim();
+  if (!pseudo) { statusEl.textContent = 'Choisis un pseudo.'; return; }
+  const preview = document.getElementById('profileAvatarPreview').src;
+  const avatarDataUri = preview.startsWith('data:image') && preview !== DEFAULT_AVATAR_SVG ? preview : null;
+  statusEl.textContent = 'Enregistrement…';
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/profile`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ displayName: pseudo, avatarDataUri, partyBadge: getSelectedBadge() })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { statusEl.textContent = data.error || 'Erreur, réessaie.'; return; }
+    currentAccount = data.user;
+    localStorage.setItem('gameUsername', data.user.displayName);
+    proceedToSetup(data.user.displayName, data.user);
+  } catch (err) {
+    statusEl.textContent = 'Service indisponible, réessaie plus tard.';
+  }
+}
+document.getElementById('profileSaveBtn').addEventListener('click', saveProfile);
+document.getElementById('profileSkipBtn').addEventListener('click', () => {
+  proceedToSetup(currentAccount.displayName, currentAccount);
+});
+
+function proceedToSetup(name, account) {
   gameUsername = name;
   document.getElementById('setupUsername').textContent = name;
-  const badgeEl = document.getElementById('setupAccountBadge');
-  if (accountBadge) {
-    badgeEl.innerHTML = `${accountBadge} — <a href="#" id="logoutLink">se déconnecter</a>`;
-    badgeEl.hidden = false;
-    document.getElementById('logoutLink').addEventListener('click', async (e) => {
-      e.preventDefault();
-      await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', headers: authHeaders() }).catch(() => {});
-      authToken = '';
-      localStorage.removeItem('gameAuthToken');
-      location.reload();
-    });
+  const row = document.getElementById('setupProfileRow');
+  if (account) {
+    row.hidden = false;
+    document.getElementById('setupAvatarImg').src = account.avatarDataUri || DEFAULT_AVATAR_SVG;
+    const chip = document.getElementById('setupBadgeChip');
+    if (account.partyBadge) {
+      chip.textContent = account.partyBadge;
+      chip.style.setProperty('--badge-color', badgeColorFor(account.partyBadge));
+      chip.hidden = false;
+    } else {
+      chip.hidden = true;
+    }
   } else {
-    badgeEl.hidden = true;
+    row.hidden = true;
   }
   showScreen('screenSetup');
   updateLevelInfo();
   loadLeaderboardPreview();
 }
 
+document.getElementById('editProfileLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  if (currentAccount) openOnboarding();
+});
+document.getElementById('logoutLinkSetup').addEventListener('click', async (e) => {
+  e.preventDefault();
+  if (!currentAccount) { showScreen('screenUsername'); return; }
+  await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', headers: authHeaders() }).catch(() => {});
+  authToken = '';
+  currentAccount = null;
+  localStorage.removeItem('gameAuthToken');
+  location.reload();
+});
+
 document.getElementById('usernameForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const val = document.getElementById('usernameInput').value.trim().slice(0, 20);
   if (!val) return;
   authToken = '';
+  currentAccount = null;
   localStorage.removeItem('gameAuthToken');
   localStorage.setItem('gameUsername', val);
   proceedToSetup(val, null);
@@ -111,9 +225,13 @@ async function loginWithToken(token) {
     const res = await fetch(`${API_BASE}/api/auth/me`, { headers: authHeaders() });
     if (!res.ok) throw new Error('session invalide');
     const data = await res.json();
+    currentAccount = data.user;
     localStorage.setItem('gameUsername', data.user.displayName);
-    const identity = data.user.email || (data.user.xUsername ? '@' + data.user.xUsername : '');
-    proceedToSetup(data.user.displayName, `Connecté via compte (${identity})`);
+    if (!data.user.profileComplete) {
+      openOnboarding();
+    } else {
+      proceedToSetup(data.user.displayName, data.user);
+    }
     return true;
   } catch (err) {
     authToken = '';
@@ -685,7 +803,7 @@ document.getElementById('replayBtn').addEventListener('click', () => {
 // Navigation entre écrans
 // ============================================================
 function showScreen(id) {
-  ['screenUsername', 'screenSetup', 'screenPlay', 'screenResult', 'screenMystery'].forEach(s => {
+  ['screenUsername', 'screenOnboarding', 'screenSetup', 'screenPlay', 'screenResult', 'screenMystery'].forEach(s => {
     document.getElementById(s).hidden = s !== id;
   });
 }

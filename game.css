@@ -235,6 +235,39 @@
 .auth-pane { margin-top: 12px; }
 #authTabs { margin-bottom: 4px; }
 
+/* --- Profil joueur (onboarding + resume sur l'ecran de config) --- */
+.profile-form { margin-top: 16px; }
+.profile-avatar-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.profile-avatar-preview {
+  width: 64px; height: 64px; border-radius: 50%; object-fit: cover;
+  background: var(--bg-subtle); border: 2px solid var(--border);
+}
+.profile-pseudo-input {
+  width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: 12px;
+  background: var(--bg); color: var(--text); font-size: 15px; font-family: var(--game-font);
+}
+.profile-pseudo-input:focus { outline: none; border-color: var(--game-purple); }
+
+.profile-badge-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; max-height: 220px; overflow-y: auto; }
+.profile-badge-option {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border-radius: 20px; border: 2px solid var(--border);
+  background: var(--bg); color: var(--text); font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all var(--transition);
+}
+.profile-badge-option:hover { border-color: var(--badge-color, var(--game-purple)); }
+.profile-badge-option.active { border-color: var(--badge-color, var(--game-purple)); background: color-mix(in srgb, var(--badge-color, var(--game-purple)) 15%, transparent); }
+.profile-badge-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+.setup-profile-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.profile-avatar-small { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); }
+.profile-badge-chip {
+  display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; border: 2px solid var(--badge-color, var(--game-purple));
+  color: var(--badge-color, var(--game-purple));
+}
+.setup-edit-profile-link { font-size: 12px; color: var(--text-muted); text-decoration: underline; }
+
 /* --- Personnage Mystère --- */
 .mystery-solved-banner {
   background: linear-gradient(135deg, rgba(244,162,97,0.25), rgba(224,86,140,0.2));

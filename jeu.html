@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800;900&family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=20260913a">
-  <link rel="stylesheet" href="game.css?v=20260913a">
+  <link rel="stylesheet" href="game.css?v=20260913b">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Crect width='8' height='16' fill='%23002060'/%3E%3Crect x='8' width='8' height='16' fill='white'/%3E%3Crect x='16' width='8' height='16' fill='%23ED2939'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -79,10 +79,43 @@
       </div>
     </section>
 
+    <!-- Écran 1b : profil (pseudo, photo, badge de parti) -->
+    <section class="game-panel" id="screenOnboarding" hidden>
+      <h2>Personnalise ton profil</h2>
+      <p class="game-hint">Ton email ou ton compte X ne sont jamais affichés — seuls ton pseudo, ta photo et ton badge sont visibles des autres joueurs.</p>
+
+      <div class="profile-form">
+        <div class="profile-avatar-row">
+          <img id="profileAvatarPreview" class="profile-avatar-preview" alt="">
+          <div>
+            <button type="button" class="btn-secondary" id="profileAvatarBtn">📷 Choisir une photo</button>
+            <input type="file" id="profileAvatarFile" accept="image/*" hidden>
+          </div>
+        </div>
+
+        <label class="game-setup-label" for="profilePseudoInput">Pseudo affiché</label>
+        <input type="text" id="profilePseudoInput" class="profile-pseudo-input" maxlength="20" placeholder="Ton pseudo">
+
+        <p class="game-setup-label" style="margin-top:14px">Badge de parti (optionnel)</p>
+        <div id="profileBadgeGrid" class="profile-badge-grid"></div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+        <button type="button" class="btn-primary" id="profileSaveBtn">Valider mon profil</button>
+        <button type="button" class="btn-secondary" id="profileSkipBtn">Passer pour l'instant</button>
+      </div>
+      <p class="game-hint" id="profileStatus"></p>
+    </section>
+
     <!-- Écran 2 : choix mode + niveau -->
     <section class="game-panel" id="screenSetup" hidden>
       <h2>Salut <span id="setupUsername"></span> 👋</h2>
-      <p class="game-hint" id="setupAccountBadge" hidden></p>
+      <div class="setup-profile-row" id="setupProfileRow" hidden>
+        <img id="setupAvatarImg" class="profile-avatar-small" alt="">
+        <span id="setupBadgeChip" class="profile-badge-chip" hidden></span>
+        <a href="#" id="editProfileLink" class="setup-edit-profile-link">modifier mon profil</a>
+        <a href="#" id="logoutLinkSetup" class="setup-edit-profile-link">se déconnecter</a>
+      </div>
       <div class="game-setup-row">
         <div>
           <p class="game-setup-label">Mode</p>
@@ -181,8 +214,9 @@
 
   </main>
 
-  <script src="config.js?v=20260913a"></script>
-  <script src="game-data.js?v=20260913a"></script>
-  <script src="game.js?v=20260913a"></script>
+  <script src="config.js?v=20260913b"></script>
+  <script src="data-loader.js?v=20260913b"></script>
+  <script src="game-data.js?v=20260913b"></script>
+  <script src="game.js?v=20260913b"></script>
 </body>
 </html>
