@@ -80,7 +80,10 @@
         </div>
       </div>
       <p class="game-hint" id="levelInfo"></p>
-      <button type="button" class="btn-primary" id="startGameBtn" style="margin-top:16px">Commencer la grille</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+        <button type="button" class="btn-primary" id="startGameBtn">Commencer la grille</button>
+        <button type="button" class="btn-secondary" id="openMysteryBtn">🕵️ Personnage Mystère</button>
+      </div>
 
       <div class="game-leaderboard-preview">
         <h3>Meilleurs scores</h3>
@@ -121,8 +124,38 @@
         <div class="game-result-stat"><span id="resultHints">0</span><label>aides utilisées</label></div>
       </div>
       <p class="game-hint" id="resultRank"></p>
+      <div id="resultMysteryReward"></div>
       <div class="game-leaderboard-list" id="resultLeaderboard"></div>
-      <button type="button" class="btn-primary" id="replayBtn" style="margin-top:16px">Rejouer</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+        <button type="button" class="btn-primary" id="replayBtn">Rejouer</button>
+        <button type="button" class="btn-secondary" id="openMysteryFromResultBtn">🕵️ Personnage Mystère</button>
+      </div>
+    </section>
+
+    <!-- Écran 5 : personnage mystère -->
+    <section class="game-panel" id="screenMystery" hidden>
+      <h2>🕵️ Personnage Mystère</h2>
+      <p class="game-hint">Devine qui se cache derrière la photo — une seule proposition toutes les 24h. Gagne des parties pour obtenir des pièces de puzzle et révéler des morceaux de l'image, pièce par pièce, pour toute la communauté.</p>
+
+      <div id="mysterySolvedBanner"></div>
+
+      <form id="mysteryGuessForm" class="game-username-form" style="margin-top:14px">
+        <input type="text" id="mysteryGuessInput" placeholder="Qui est-ce ? (ex : Barack Obama)" maxlength="80" autocomplete="off">
+        <button type="submit" class="btn-primary">Proposer</button>
+      </form>
+      <p class="game-hint" id="mysteryGuessStatus"></p>
+
+      <div class="mystery-board-wrap">
+        <p class="game-setup-label">Puzzle collectif — <span id="mysteryProgressText">0 / 100</span> pièces placées</p>
+        <div id="mysteryBoard" class="mystery-board"></div>
+      </div>
+
+      <div class="mystery-inventory-wrap">
+        <p class="game-setup-label">Mes pièces</p>
+        <div id="mysteryInventory" class="mystery-inventory"></div>
+      </div>
+
+      <button type="button" class="btn-secondary" id="closeMysteryBtn" style="margin-top:18px">← Retour</button>
     </section>
 
   </main>

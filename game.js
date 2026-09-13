@@ -566,6 +566,7 @@ async function finishGame() {
     const data = await res.json();
     if (res.ok) {
       document.getElementById('resultRank').textContent = data.rank ? `Tu es ${data.rank}ᵉ au classement ${LEVEL_LABELS[gameLevel]} !` : 'Score enregistré !';
+      renderMysteryReward(data.mysteryReward);
     } else {
       document.getElementById('resultRank').textContent = 'Score calculé (non enregistré : ' + (data.error || 'erreur serveur') + ').';
     }
@@ -587,7 +588,191 @@ document.getElementById('replayBtn').addEventListener('click', () => {
 // Navigation entre écrans
 // ============================================================
 function showScreen(id) {
-  ['screenUsername', 'screenSetup', 'screenPlay', 'screenResult'].forEach(s => {
+  ['screenUsername', 'screenSetup', 'screenPlay', 'screenResult', 'screenMystery'].forEach(s => {
     document.getElementById(s).hidden = s !== id;
   });
 }
+
+// ============================================================
+// Personnage Mystère
+// ============================================================
+const RARITY_LABELS = { commune: 'Commune', rare: 'Rare', epique: 'Épique', legendaire: 'Légendaire' };
+const RARITY_EMOJI = { commune: '⚪', rare: '🔵', epique: '🟣', legendaire: '🟡' };
+
+function renderMysteryReward(reward) {
+  const el = document.getElementById('resultMysteryReward');
+  if (!reward) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div class="mystery-reward-toast mystery-rarity-${reward.rarity}">
+      🧩 Pièce de puzzle gagnée — <strong>${RARITY_EMOJI[reward.rarity] || ''} ${RARITY_LABELS[reward.rarity] || reward.rarity}</strong>
+    </div>`;
+}
+
+async function fetchMysteryState() {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
+    const res = await fetch(`${API_BASE}/api/mystery/state?username=${encodeURIComponent(gameUsername)}`, { cache: 'no-store', signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!res.ok) throw new Error('bad status');
+    return await res.json();
+  } catch (err) {
+    return null;
+  }
+}
+
+function formatCountdown(msRemaining) {
+  if (msRemaining <= 0) return null;
+  const h = Math.floor(msRemaining / 3600000);
+  const m = Math.floor((msRemaining % 3600000) / 60000);
+  return `${h}h${String(m).padStart(2, '0')}`;
+}
+
+async function loadMysteryScreen() {
+  const boardEl = document.getElementById('mysteryBoard');
+  const invEl = document.getElementById('mysteryInventory');
+  boardEl.innerHTML = '<p class="game-hint">Chargement…</p>';
+  invEl.innerHTML = '';
+
+  const state = await fetchMysteryState();
+  if (!state) {
+    boardEl.innerHTML = `<p class="game-hint">⏳ Service indisponible pour le moment.
+      <button type="button" class="btn-secondary" id="mysteryRetryBtn" style="margin-left:8px">Réessayer</button></p>`;
+    document.getElementById('mysteryRetryBtn')?.addEventListener('click', loadMysteryScreen);
+    return;
+  }
+
+  const solvedBanner = document.getElementById('mysterySolvedBanner');
+  if (state.characterName) {
+    solvedBanner.innerHTML = `<p class="mystery-solved-banner">🎉 Trouvé par <strong>${escapeHtml(state.solvedBy)}</strong> : c'était <strong>${escapeHtml(state.characterName)}</strong> !</p>`;
+  } else {
+    solvedBanner.innerHTML = '';
+  }
+
+  const guessForm = document.getElementById('mysteryGuessForm');
+  const guessStatusEl = document.getElementById('mysteryGuessStatus');
+  if (state.characterName) {
+    guessForm.hidden = true;
+    guessStatusEl.textContent = '';
+  } else {
+    guessForm.hidden = false;
+    const gs = state.guessStatus;
+    if (gs && !gs.canGuess && gs.nextAllowedAt) {
+      const remaining = new Date(gs.nextAllowedAt).getTime() - Date.now();
+      guessForm.querySelector('input').disabled = true;
+      guessForm.querySelector('button').disabled = true;
+      guessStatusEl.textContent = `Prochaine proposition possible dans ${formatCountdown(remaining) || 'quelques instants'}.`;
+    } else {
+      guessForm.querySelector('input').disabled = false;
+      guessForm.querySelector('button').disabled = false;
+      guessStatusEl.textContent = '';
+    }
+  }
+
+  document.getElementById('mysteryProgressText').textContent = `${state.filledCount} / ${state.totalPieces}`;
+
+  boardEl.innerHTML = '';
+  boardEl.style.setProperty('--mystery-grid', state.gridSize);
+  state.board.forEach(cell => {
+    const div = document.createElement('div');
+    div.className = 'mystery-cell' + (cell.filled ? ' filled mystery-rarity-' + cell.rarity : '');
+    if (cell.filled) {
+      div.style.backgroundImage = `url("${cell.dataUri}")`;
+      div.title = RARITY_LABELS[cell.rarity] || '';
+    }
+    boardEl.appendChild(div);
+  });
+
+  invEl.innerHTML = '';
+  if (!state.inventory.length) {
+    invEl.innerHTML = '<p class="game-hint">Gagne une partie pour obtenir ta première pièce !</p>';
+  } else {
+    state.inventory.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'mystery-inv-card mystery-rarity-' + item.rarity;
+      card.innerHTML = `
+        <span class="mystery-inv-rarity">${RARITY_EMOJI[item.rarity] || ''} ${RARITY_LABELS[item.rarity] || item.rarity}</span>
+        <span class="mystery-inv-count">×${item.count}</span>
+        ${item.alreadyOnBoard
+          ? '<span class="mystery-inv-note">Déjà placée</span>'
+          : `<button type="button" class="btn-secondary mystery-place-btn" data-index="${item.index}">Placer</button>`}`;
+      invEl.appendChild(card);
+    });
+    invEl.querySelectorAll('.mystery-place-btn').forEach(btn => {
+      btn.addEventListener('click', () => placeMysteryPiece(Number(btn.dataset.index)));
+    });
+  }
+}
+
+async function placeMysteryPiece(index) {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
+    const res = await fetch(`${API_BASE}/api/mystery/place`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: gameUsername, pieceIndex: index }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Impossible de placer cette pièce.');
+    }
+  } catch (err) {
+    alert('Service indisponible, réessaie plus tard.');
+  }
+  loadMysteryScreen();
+}
+
+document.getElementById('mysteryGuessForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = document.getElementById('mysteryGuessInput');
+  const guess = input.value.trim();
+  if (!guess) return;
+  const statusEl = document.getElementById('mysteryGuessStatus');
+  statusEl.textContent = 'Envoi…';
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
+    const res = await fetch(`${API_BASE}/api/mystery/guess`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: gameUsername, guess }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    const data = await res.json();
+    if (res.status === 429) {
+      statusEl.textContent = `Une seule proposition toutes les 24h — réessaie dans ${formatCountdown(new Date(data.nextAllowedAt).getTime() - Date.now()) || 'quelques instants'}.`;
+      return;
+    }
+    if (!res.ok) {
+      statusEl.textContent = data.error || 'Erreur serveur.';
+      return;
+    }
+    input.value = '';
+    if (data.correct) {
+      statusEl.textContent = data.alreadySolved ? 'Déjà trouvé par un autre joueur !' : '🎉 Bravo, bonne réponse !';
+    } else {
+      statusEl.textContent = 'Perdu, réessaie dans 24h !';
+    }
+  } catch (err) {
+    statusEl.textContent = 'Service indisponible, réessaie plus tard.';
+  }
+  loadMysteryScreen();
+});
+
+document.getElementById('openMysteryBtn').addEventListener('click', () => {
+  showScreen('screenMystery');
+  loadMysteryScreen();
+});
+document.getElementById('openMysteryFromResultBtn').addEventListener('click', () => {
+  showScreen('screenMystery');
+  loadMysteryScreen();
+});
+document.getElementById('closeMysteryBtn').addEventListener('click', () => {
+  showScreen('screenSetup');
+  updateLevelInfo();
+  loadLeaderboardPreview();
+});

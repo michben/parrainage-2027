@@ -222,6 +222,75 @@
 .game-result-stat:nth-child(3) span { color: var(--game-orange); }
 .game-result-stat label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 
+/* --- Personnage Mystère --- */
+.mystery-solved-banner {
+  background: linear-gradient(135deg, rgba(244,162,97,0.25), rgba(224,86,140,0.2));
+  border: 2px solid var(--game-orange);
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-size: 14px;
+  margin: 10px 0;
+}
+.mystery-reward-toast {
+  margin: 14px 0;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  border: 2px solid var(--border);
+  background: var(--bg-subtle);
+}
+.mystery-board-wrap, .mystery-inventory-wrap { margin-top: 22px; }
+.mystery-board {
+  --mystery-grid: 10;
+  display: grid;
+  grid-template-columns: repeat(var(--mystery-grid), 1fr);
+  gap: 2px;
+  max-width: 480px;
+  margin-top: 10px;
+  border: 3px solid var(--game-purple);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--border);
+}
+.mystery-cell {
+  aspect-ratio: 1;
+  background-color: var(--bg-subtle);
+  background-size: cover;
+  background-position: center;
+}
+.mystery-cell.filled { box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08); }
+
+.mystery-inventory { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.mystery-inv-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 2px solid var(--border);
+  background: var(--bg-elevated);
+  font-family: var(--game-font);
+  font-size: 12px;
+  min-width: 110px;
+}
+.mystery-inv-rarity { font-weight: 700; }
+.mystery-inv-count { font-size: 11px; color: var(--text-muted); }
+.mystery-inv-note { font-size: 11px; color: var(--text-faint); font-style: italic; }
+.mystery-place-btn { font-size: 12px; padding: 6px 10px; }
+
+/* Couleurs de rarete, communes au tableau, a l'inventaire et au toast */
+.mystery-rarity-commune { border-color: #9aa3af !important; }
+.mystery-rarity-rare { border-color: var(--game-blue) !important; box-shadow: 0 0 0 1px rgba(58,134,200,0.3); }
+.mystery-rarity-epique { border-color: var(--game-purple) !important; box-shadow: 0 0 8px rgba(123,44,191,0.4); }
+.mystery-rarity-legendaire {
+  border-color: #e8b400 !important;
+  box-shadow: 0 0 12px rgba(232,180,0,0.55);
+  background-image: linear-gradient(135deg, rgba(232,180,0,0.12), rgba(244,162,97,0.12));
+}
+
 /* --- Responsive : ecran de configuration + jeu --- */
 @media (max-width: 700px) {
   .game-wrap { padding: 0 12px 40px; margin: 16px auto; }
@@ -236,6 +305,7 @@
   .game-cell input { font-size: 13px; }
   .game-clue-list { max-height: 240px; width: 100%; }
   .game-result-stat span { font-size: 26px; }
+  .mystery-board { max-width: 100%; }
 }
 @media (max-width: 420px) {
   .game-cell { width: 22px; height: 22px; }
