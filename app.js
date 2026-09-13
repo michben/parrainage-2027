@@ -165,6 +165,7 @@ function renderMap() {
     `${stats.total} parrainages · ${stats.deptCount} départements · ${stats.deptsAtMax} au plafond`;
 
   renderLegend(candColor);
+  renderOutremer(data, candColor);
 
   mapSvg.selectAll('path').remove();
 
@@ -219,6 +220,29 @@ function renderLegend(candColor) {
       ${s.label}
     </div>`
   ).join('');
+}
+
+// Départements et collectivités d'outre-mer : comptent pour les règles de
+// parrainage (500 signatures, 30 départements minimum) mais n'ont pas de
+// forme géographique dans le fond de carte métropolitain, donc affichés
+// dans un tableau séparé plutôt que sur la carte SVG.
+function renderOutremer(data, candColor) {
+  const section = document.getElementById('outremerSection');
+  const grid = document.getElementById('outremerGrid');
+  if (!section || !grid || typeof OUTREMER_CODES === 'undefined') return;
+
+  section.hidden = false;
+  grid.innerHTML = OUTREMER_CODES.map(code => {
+    const val = data[code] || 0;
+    const opacity = val === 0 ? 1 : getOpacityForValue(val);
+    const bg = val === 0 ? 'var(--map-empty)' : candColor;
+    return `
+      <div class="outremer-item" title="${DEPARTEMENTS[code]} : ${val} parrainage${val > 1 ? 's' : ''}">
+        <div class="outremer-swatch" style="background:${bg};opacity:${opacity}"></div>
+        <div class="outremer-name">${DEPARTEMENTS[code]}</div>
+        <div class="outremer-val">${val}</div>
+      </div>`;
+  }).join('');
 }
 
 // ============================================================

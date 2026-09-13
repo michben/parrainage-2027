@@ -136,8 +136,17 @@ const DEPARTEMENTS = {
   '80':'Somme','81':'Tarn','82':'Tarn-et-Garonne','83':'Var','84':'Vaucluse',
   '85':'Vendée','86':'Vienne','87':'Haute-Vienne','88':'Vosges','89':'Yonne',
   '90':'Territoire de Belfort','91':'Essonne','92':'Hauts-de-Seine','93':'Seine-Saint-Denis','94':'Val-de-Marne',
-  '95':'Val-d\'Oise'
+  '95':'Val-d\'Oise',
+  '971':'Guadeloupe','972':'Martinique','973':'Guyane','974':'La Réunion','976':'Mayotte',
+  '975':'Saint-Pierre-et-Miquelon','977':'Saint-Barthélemy','978':'Saint-Martin',
+  '986':'Wallis-et-Futuna','987':'Polynésie française','988':'Nouvelle-Calédonie'
 };
+
+// Codes des departements et collectivites d'outre-mer : comptent pour la
+// regle des 500 signatures et des 30 departements minimum, mais n'ont pas
+// de forme geographique dans le fond de carte (metropole uniquement) -
+// affiches a part dans un tableau dedie plutot que sur la carte SVG.
+const OUTREMER_CODES = ['971','972','973','974','976','975','977','978','986','987','988'];
 
 // --- Données de repli (utilisées seulement si l'API ne répond pas) ---
 const parrainagesData = generateParrainages();
