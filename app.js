@@ -317,6 +317,104 @@ function renderComparisonTable() {
 }
 
 // ============================================================
+// 5bis. GRAPHIQUE DE PROGRESSION VERS L'OBJECTIF (500 signatures)
+// ============================================================
+const PROGRESS_STATUSES = ['sécurisé', 'quasi_sécurisé', 'en_progression', 'en_collecte', 'en_difficulté', 'très_en_retard'];
+
+// Rampe ordinale une-teinte (validée avec scripts/validate_palette.js --ordinal,
+// tous les checks passent en clair comme en sombre) : du meilleur statut
+// (le plus sombre/sature) au pire (le plus clair), separement par theme
+// car le mode sombre a besoin de teintes globalement plus claires pour
+// rester lisibles sur un fond quasi noir.
+const PROGRESS_RAMP_LIGHT = ['#00306e', '#124a89', '#2e64a6', '#497fc3', '#639be1', '#7fb7ff'];
+const PROGRESS_RAMP_DARK  = ['#215da5', '#3a75bf', '#4f8bd6', '#67a4f1', '#80beff', '#99d8ff'];
+
+function getProgressColor(status) {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const ramp = isDark ? PROGRESS_RAMP_DARK : PROGRESS_RAMP_LIGHT;
+  const idx = PROGRESS_STATUSES.indexOf(status);
+  return ramp[idx === -1 ? ramp.length - 1 : idx];
+}
+
+function renderProgressChart() {
+  const wrap = document.getElementById('progressChartWrap');
+  const legendEl = document.getElementById('progressChartLegend');
+  if (!wrap) return;
+
+  const rows = getActiveCandidates()
+    .map(cand => ({ cand, stats: getCandidateStats(cand.id) }))
+    .sort((a, b) => b.stats.total - a.stats.total);
+
+  const maxTotal = rows.reduce((max, r) => Math.max(max, r.stats.total), 0);
+  const scaleMax = Math.max(SEUIL_PARRAINAGES * 1.15, maxTotal * 1.05, 1);
+  const thresholdPct = Math.min(100, (SEUIL_PARRAINAGES / scaleMax) * 100);
+
+  legendEl.innerHTML = PROGRESS_STATUSES.map(s =>
+    `<div class="legend-item"><div class="legend-swatch" style="background:${getProgressColor(s)}"></div>${getStatusLabel(s)}</div>`
+  ).join('');
+
+  wrap.innerHTML = `
+    <div class="progress-chart">
+      <div class="progress-chart-threshold" style="left:${thresholdPct}%">
+        <span>Objectif : ${SEUIL_PARRAINAGES}</span>
+      </div>
+      ${rows.map(r => {
+        const pct = Math.min(100, (r.stats.total / scaleMax) * 100);
+        return `
+        <div class="progress-chart-row" data-id="${r.cand.id}" tabindex="0">
+          <div class="progress-chart-label" title="${r.cand.nom}">${r.cand.nom}</div>
+          <div class="progress-chart-track">
+            <div class="progress-chart-bar" style="width:${pct}%;background:${getProgressColor(r.stats.status)}"></div>
+          </div>
+          <div class="progress-chart-value">${r.stats.total}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+
+  wrap.querySelectorAll('.progress-chart-row').forEach(row => {
+    row.addEventListener('mouseenter', (e) => showProgressTooltip(e, row.dataset.id));
+    row.addEventListener('mousemove', moveProgressTooltip);
+    row.addEventListener('mouseleave', hideProgressTooltip);
+    row.addEventListener('click', () => {
+      selectCandidate(row.dataset.id);
+      document.getElementById('statsPanel')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  });
+}
+
+function showProgressTooltip(event, candId) {
+  const cand = getActiveCandidates().find(c => c.id === candId);
+  if (!cand) return;
+  const stats = getCandidateStats(candId);
+  const pct = Math.round(stats.total / SEUIL_PARRAINAGES * 100);
+  let tooltip = document.getElementById('progressTooltip');
+  if (!tooltip) {
+    tooltip = document.createElement('div');
+    tooltip.id = 'progressTooltip';
+    tooltip.className = 'tooltip';
+    tooltip.style.position = 'fixed';
+    document.body.appendChild(tooltip);
+  }
+  tooltip.innerHTML = `<strong>${cand.nom}</strong>
+    <div class="tt-row"><span>Parrainages</span><span style="font-weight:700;color:${getProgressColor(stats.status)}">${stats.total} / ${SEUIL_PARRAINAGES}</span></div>
+    <div class="tt-row"><span>Progression</span><span>${pct}%</span></div>
+    <div class="tt-row"><span>Statut</span><span>${getStatusLabel(stats.status)}</span></div>`;
+  tooltip.style.display = 'block';
+  moveProgressTooltip(event);
+}
+function moveProgressTooltip(event) {
+  const tooltip = document.getElementById('progressTooltip');
+  if (!tooltip) return;
+  tooltip.style.left = (event.clientX + 14) + 'px';
+  tooltip.style.top = (event.clientY + 14) + 'px';
+}
+function hideProgressTooltip() {
+  const tooltip = document.getElementById('progressTooltip');
+  if (tooltip) tooltip.style.display = 'none';
+}
+
+// ============================================================
 // 6. FILTRES
 // ============================================================
 document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -342,6 +440,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
   } else {
     icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
   }
+  renderProgressChart();
 });
 
 // ============================================================
@@ -386,6 +485,7 @@ async function init() {
   initMap();
   renderCandidates();
   renderComparisonTable();
+  renderProgressChart();
   renderFooter();
 
   const cands = getActiveCandidates();

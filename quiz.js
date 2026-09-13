@@ -2,7 +2,7 @@
 // Quiz "Pour qui voter ?" — logique et rendu
 // Méthode : pour chaque candidat, distance moyenne pondérée entre
 // tes réponses (-2..+2) et les positions publiques du candidat sur
-// 21 questions, pondérée ×1,5 sur tes thèmes prioritaires (max 3).
+// 10 questions, pondérée ×1,5 sur tes thèmes prioritaires (max 5).
 // ============================================================
 
 let quizAnswers = {};
@@ -18,7 +18,7 @@ function quizAnsweredCount() {
 function quizToggleTheme(themeId) {
   if (quizThemes.includes(themeId)) {
     quizThemes = quizThemes.filter(t => t !== themeId);
-  } else if (quizThemes.length < 3) {
+  } else if (quizThemes.length < 5) {
     quizThemes.push(themeId);
   }
   renderQuiz();
@@ -84,11 +84,11 @@ function renderQuiz() {
       <div class="quiz-theme-grid">
         ${QUIZ_THEMES.map(t => `
           <label class="quiz-theme-chip ${quizThemes.includes(t.id) ? 'active' : ''}">
-            <input type="checkbox" data-theme="${t.id}" ${quizThemes.includes(t.id) ? 'checked' : ''} ${!quizThemes.includes(t.id) && quizThemes.length >= 3 ? 'disabled' : ''}>
+            <input type="checkbox" data-theme="${t.id}" ${quizThemes.includes(t.id) ? 'checked' : ''} ${!quizThemes.includes(t.id) && quizThemes.length >= 5 ? 'disabled' : ''}>
             <span>${t.label}</span>
           </label>`).join('')}
       </div>
-      <p class="quiz-hint">Thèmes prioritaires sélectionnés : ${quizThemes.length}/3 (pondéré ×1,5)</p>
+      <p class="quiz-hint">Thèmes prioritaires sélectionnés : ${quizThemes.length}/5 (pondéré ×1,5)</p>
       <label class="quiz-checkbox-row">
         <input type="checkbox" id="quizDeclaredOnly" ${quizDeclaredOnly ? 'checked' : ''}>
         <span>Ne comparer qu'avec les candidatures déclarées</span>
@@ -156,13 +156,17 @@ function renderQuizResults() {
       </div>
       ${top3.length === 0 ? '<p class="quiz-hint">Aucun candidat à comparer (décoche le filtre déclarés uniquement).</p>' : `
       <div class="quiz-result-cards">
-        ${top3.map(r => `
+        ${top3.map(r => {
+          const programme = (getActiveFiches()[r.cand.id] || {}).programme;
+          return `
           <div class="quiz-result-card">
             ${avatarHtml(r.cand, 'width:56px;height:56px;font-size:18px;margin:0 auto 8px')}
             <div class="quiz-result-name">${r.cand.nom}</div>
             <div class="quiz-result-party">${r.cand.parti}</div>
             <div class="quiz-result-pct">${r.proximity}%</div>
-          </div>`).join('')}
+            ${programme ? `<p class="quiz-result-programme">${programme}</p>` : ''}
+          </div>`;
+        }).join('')}
       </div>`}
       ${themeEmphasis.length ? `<p class="quiz-hint">Tes réponses sont les plus marquées sur : ${themeEmphasis.map(t => t.theme.label).join(', ')}</p>` : ''}
       ${top1 ? `
