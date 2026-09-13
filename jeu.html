@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800;900&family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=20260913a">
-  <link rel="stylesheet" href="game.css?v=20260913b">
+  <link rel="stylesheet" href="game.css?v=20260913c">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Crect width='8' height='16' fill='%23002060'/%3E%3Crect x='8' width='8' height='16' fill='white'/%3E%3Crect x='16' width='8' height='16' fill='%23ED2939'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -162,8 +162,11 @@
       </div>
       <div class="game-active-clue" id="gameActiveClue">Clique sur une case pour commencer.</div>
       <div class="game-play-body">
-        <div class="game-grid-scroll">
-          <div id="gameGrid" class="game-grid"></div>
+        <div>
+          <div class="game-grid-scroll">
+            <div id="gameGrid" class="game-grid"></div>
+          </div>
+          <p class="game-grid-hint">↕️ ↔️ Fais défiler la grille si elle ne tient pas entièrement à l'écran</p>
         </div>
         <div class="game-clue-list" id="gameClueList"></div>
       </div>
@@ -214,9 +217,9 @@
 
   </main>
 
-  <script src="config.js?v=20260913b"></script>
-  <script src="data-loader.js?v=20260913b"></script>
-  <script src="game-data.js?v=20260913b"></script>
-  <script src="game.js?v=20260913b"></script>
+  <script src="config.js?v=20260913c"></script>
+  <script src="data-loader.js?v=20260913c"></script>
+  <script src="game-data.js?v=20260913c"></script>
+  <script src="game.js?v=20260913c"></script>
 </body>
 </html>

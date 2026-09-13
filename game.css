@@ -139,7 +139,16 @@
 .game-active-clue.fleches-style { font-size: 16px; padding: 16px 18px; border-width: 2px; }
 
 .game-play-body { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
-.game-grid-scroll { overflow: auto; max-width: 100%; flex-shrink: 0; }
+/* Hauteur plafonnee + defilement interne : sur une grande grille
+   (niveau difficile), tout reste accessible (chrono, indices, liste
+   de definitions) sans avoir a faire defiler toute la page. */
+.game-grid-scroll {
+  overflow: auto;
+  max-width: 100%;
+  max-height: min(520px, calc(100vh - 320px));
+  flex-shrink: 0;
+}
+.game-grid-hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; text-align: center; }
 .game-grid {
   display: grid;
   gap: 2px;
@@ -349,6 +358,7 @@
   .game-play-topbar { justify-content: center; text-align: center; }
   .game-cell { width: 26px; height: 26px; }
   .game-cell input { font-size: 13px; }
+  .game-grid-scroll { max-height: 320px; width: 100%; }
   .game-clue-list { max-height: 240px; width: 100%; }
   .game-result-stat span { font-size: 26px; }
   .mystery-board { max-width: 100%; }
