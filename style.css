@@ -175,15 +175,16 @@ a:hover { text-decoration: underline; }
 }
 .countdown-unit-label {
   font-size: 11px;
-  color: rgba(255,255,255,0.7);
+  font-weight: 600;
+  color: rgba(255,255,255,0.92);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-top: 4px;
 }
-.countdown-sep { font-family: var(--font-display); font-size: 40px; color: rgba(255,255,255,0.4); align-self: flex-start; margin-top: 2px; }
-.countdown-target { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 12px; }
-.countdown-total-minutes { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 4px; }
-.countdown-total-minutes span { font-weight: 700; font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.85); }
+.countdown-sep { font-family: var(--font-display); font-size: 40px; color: rgba(255,255,255,0.5); align-self: flex-start; margin-top: 2px; }
+.countdown-target { font-size: 12px; color: rgba(255,255,255,0.85); margin-top: 12px; }
+.countdown-total-minutes { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.92); margin-top: 4px; }
+.countdown-total-minutes span { font-weight: 800; font-variant-numeric: tabular-nums; color: #fff; }
 
 /* --- Filter bar --- */
 .filter-bar {
