@@ -1,5 +1,5 @@
 // ============================================================
-// Parrainages 2027 — Données de démonstration (repli hors-ligne)
+// Présidentielle 2027 — Données de démonstration (repli hors-ligne)
 // Ces données sont utilisées uniquement si l'API Render ne répond
 // pas (ex: service en veille au premier chargement). Sinon, les
 // données réelles gérées par l'admin sont chargées via loadSiteData().

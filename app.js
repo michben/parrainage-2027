@@ -1,7 +1,7 @@
 // ============================================================
-// Parrainages 2027 — Application principale (site public)
+// Présidentielle 2027 — Application principale (site public)
 // Carte interactive D3. Le panneau d'administration vit sur un
-// service séparé (voir dépôt parrainage-2027-admin).
+// service séparé (voir dépôt presidentiel-2027-admin).
 // ============================================================
 
 // --- Échelle de couleurs pour la carte ---
@@ -235,6 +235,8 @@ function renderStats(cand) {
       </div>
     </div>
 
+    <div id="ficheSection"></div>
+
     <div class="stat-block">
       <div class="stat-label">Parrainages</div>
       <div class="stat-value">${stats.total} <span class="unit">/ ${SEUIL_PARRAINAGES}</span></div>
@@ -252,8 +254,6 @@ function renderStats(cand) {
         <span class="status-dot ${stats.status}"></span>${statusLabel}
       </div>
     </div>
-
-    <div id="ficheSection"></div>
   `;
 }
 

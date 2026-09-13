@@ -1,6 +1,6 @@
 {
-  "name": "Parrainages 2027 — Carte interactive des candidats",
-  "short_name": "Parrainages 2027",
+  "name": "Présidentielle 2027 — Carte interactive des candidats",
+  "short_name": "Présidentielle 2027",
   "description": "Carte interactive de France montrant la répartition géographique des parrainages pour l'élection présidentielle 2027.",
   "start_url": "./",
   "display": "standalone",
