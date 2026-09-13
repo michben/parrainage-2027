@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
+  <script>
+    // Applique le theme choisi (localStorage, partage avec jeu.html) avant
+    // le premier rendu pour eviter un flash du mauvais theme.
+    (function () {
+      var saved = localStorage.getItem('siteTheme');
+      if (saved === 'dark' || saved === 'light') document.documentElement.setAttribute('data-theme', saved);
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Présidentielle 2027 — Carte interactive des candidats</title>

@@ -1,6 +1,9 @@
 // ============================================================
 // Le jeu des présidents — mots croisés / mots fléchés
 // Grilles figées (game-data.js), aucune génération à la volée.
+// Deux layouts distincts par niveau : GAME_GRIDS[niveau].croises et
+// GAME_GRIDS[niveau].fleches, chacun respectant ses propres règles
+// (voir commentaire en tête de game-data.js).
 // ============================================================
 
 const SCORING = {
@@ -10,11 +13,34 @@ const SCORING = {
 };
 const LEVEL_LABELS = { facile: 'Facile', moyen: 'Moyen', difficile: 'Difficile' };
 
+// Même thème que le site principal (le bouton lune/soleil écrit dans la
+// même clé localStorage, lue au chargement par un script inline).
+(function syncThemeIcon() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.innerHTML = isDark
+      ? '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>'
+      : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  }
+})();
+document.getElementById('themeToggle')?.addEventListener('click', () => {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('siteTheme', next);
+  const icon = document.getElementById('themeIcon');
+  icon.innerHTML = next === 'dark'
+    ? '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+});
+
 let gameUsername = '';
 let gameMode = 'croises';
 let gameLevel = 'facile';
 let currentGrid = null;      // { rows, cols, words }
 let cellMeta = {};           // "r,c" -> { letter, words:[wordIndex,...], number }
+let clueCellMeta = {};       // "r,c" -> { wordIdx, dir, clue } (mode fléchés uniquement)
 let cellInputs = {};         // "r,c" -> <input> element
 let selectedCell = null;     // {r,c}
 let selectedDir = 'H';
@@ -51,6 +77,7 @@ document.querySelectorAll('#modeChoice .game-choice').forEach(btn => {
     document.querySelectorAll('#modeChoice .game-choice').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     gameMode = btn.dataset.mode;
+    updateLevelInfo();
   });
 });
 document.querySelectorAll('#levelChoice .game-choice').forEach(btn => {
@@ -71,7 +98,7 @@ document.querySelectorAll('#leaderboardLevelChoice .game-choice').forEach(btn =>
 
 function updateLevelInfo() {
   const s = SCORING[gameLevel];
-  const grid = GAME_GRIDS[gameLevel];
+  const grid = GAME_GRIDS[gameLevel][gameMode];
   document.getElementById('levelInfo').textContent =
     `${grid.words.length} mots · ${s.base} points de base · ${s.maxLetterHints} indice(s) lettre, ${s.maxWordHints} indice(s) mot disponibles.`;
 }
@@ -149,17 +176,32 @@ function buildCellMeta(grid) {
       const r = w.dir === 'H' ? w.row : w.row + i;
       const c = w.dir === 'H' ? w.col + i : w.col;
       const key = `${r},${c}`;
-      if (!meta[key]) meta[key] = { letter: w.word[i], words: [], starts: [] };
+      if (!meta[key]) meta[key] = { letter: w.word[i], words: [] };
       meta[key].words.push(idx);
-      if (i === 0) { meta[key].number = w.number; meta[key].starts.push(w.dir); }
+      if (i === 0) meta[key].number = w.number;
     }
   });
   return meta;
 }
 
+// Mode fléchés uniquement : une case de définition dédiée par mot, placée
+// juste avant sa première lettre (à gauche pour un mot horizontal, au-dessus
+// pour un mot vertical) - conforme aux vraies règles fournies. Cette case
+// n'est jamais une case-lettre : elle affiche le texte de définition + une
+// flèche indiquant le sens de lecture.
+function buildClueCellMeta(grid) {
+  const meta = {};
+  grid.words.forEach((w, idx) => {
+    const key = `${w.clueRow},${w.clueCol}`;
+    meta[key] = { wordIdx: idx, dir: w.dir, clue: w.clue };
+  });
+  return meta;
+}
+
 function startGame() {
-  currentGrid = GAME_GRIDS[gameLevel];
+  currentGrid = GAME_GRIDS[gameLevel][gameMode];
   cellMeta = buildCellMeta(currentGrid);
+  clueCellMeta = gameMode === 'fleches' ? buildClueCellMeta(currentGrid) : {};
   cellInputs = {};
   selectedCell = null;
   selectedDir = 'H';
@@ -180,7 +222,7 @@ function startGame() {
   timerInterval = setInterval(updateTimerDisplay, 250);
   updateTimerDisplay();
 
-  // Sélectionne automatiquement le premier mot pour demarrer.
+  // Sélectionne automatiquement le premier mot pour démarrer.
   const first = currentGrid.words[0];
   selectCell(first.row, first.col, first.dir);
 }
@@ -195,27 +237,40 @@ function renderGrid() {
     for (let c = 0; c < currentGrid.cols; c++) {
       const key = `${r},${c}`;
       const meta = cellMeta[key];
+      const clueMeta = clueCellMeta[key];
+
+      if (clueMeta) {
+        // Case de définition (mots fléchés) : grisée, texte + flèche, pas
+        // de saisie possible. Clic = sélectionne le mot correspondant.
+        const cellEl = document.createElement('div');
+        cellEl.className = 'game-cell game-clue-cell';
+        const arrow = document.createElement('span');
+        arrow.className = 'game-clue-arrow';
+        arrow.textContent = clueMeta.dir === 'H' ? '→' : '↓';
+        const text = document.createElement('span');
+        text.className = 'game-clue-text';
+        // Case minuscule a l'ecran : texte tronque, la definition complete
+        // reste lisible via l'infobulle (title) et le bandeau au-dessus de
+        // la grille des qu'on clique/tape dans le mot.
+        text.textContent = clueMeta.clue.length > 22 ? clueMeta.clue.slice(0, 21) + '…' : clueMeta.clue;
+        cellEl.appendChild(arrow);
+        cellEl.appendChild(text);
+        cellEl.title = clueMeta.clue;
+        cellEl.addEventListener('click', () => {
+          const w = currentGrid.words[clueMeta.wordIdx];
+          selectCell(w.row, w.col, w.dir);
+        });
+        wrap.appendChild(cellEl);
+        continue;
+      }
+
       const cellEl = document.createElement('div');
       cellEl.className = 'game-cell' + (meta ? '' : ' blocked');
       if (meta) {
-        if (meta.number) {
+        if (meta.number && gameMode === 'croises') {
           const badge = document.createElement('span');
-          if (gameMode === 'fleches') {
-            // Vraies flèches (convention des mots fléchés), pas de numero :
-            // -> pour un mot qui se lit vers la droite, v pour vers le bas,
-            // combinaison si la case demarre les deux.
-            badge.className = 'game-cell-arrow';
-            const hasH = meta.starts.includes('H');
-            const hasV = meta.starts.includes('V');
-            badge.textContent = hasH && hasV ? '⌐' : hasH ? '→' : '↓';
-            badge.title = meta.starts.map(d => {
-              const w = currentGrid.words.find(x => x.row === r && x.col === c && x.dir === d);
-              return w ? w.clue : '';
-            }).join(' / ');
-          } else {
-            badge.className = 'game-cell-number';
-            badge.textContent = meta.number;
-          }
+          badge.className = 'game-cell-number';
+          badge.textContent = meta.number;
           cellEl.appendChild(badge);
         }
         const input = document.createElement('input');
@@ -241,8 +296,8 @@ function renderClueList() {
   document.getElementById('gameActiveClue').classList.toggle('fleches-style', fleches);
 
   if (fleches) {
-    // Vraies mots fléchés : pas de liste externe, tout est dans la grille
-    // (flèches + survol/tap) et dans le bandeau de définition au-dessus.
+    // Vraies règles des mots fléchés : pas de liste externe, les
+    // définitions sont dans la grille (cases grisées + flèches).
     listEl.hidden = true;
     listEl.innerHTML = '';
     return;
@@ -253,8 +308,8 @@ function renderClueList() {
   const vert = currentGrid.words.filter(w => w.dir === 'V').sort((a, b) => a.number - b.number);
 
   listEl.innerHTML = `
-    ${renderClueGroup('Horizontal', horiz)}
-    ${renderClueGroup('Vertical', vert)}
+    ${renderClueGroup('Horizontalement', horiz)}
+    ${renderClueGroup('Verticalement', vert)}
   `;
   listEl.querySelectorAll('[data-word-idx]').forEach(el => {
     el.addEventListener('click', () => {
@@ -283,12 +338,10 @@ function renderClueGroup(title, words) {
 // Sélection / saisie
 // ============================================================
 function onCellFocus(r, c) {
-  // Bug corrige : la direction active (selectedDir) ne se remettait pas a
-  // jour au simple focus, seulement via selectCell()/fleches. Resultat, sur
-  // une case d'intersection, taper ou supprimer une lettre pouvait suivre le
-  // mot dans l'AUTRE sens que celui que le joueur remplissait. On corrige
-  // ici : reclic sur la meme case d'intersection = bascule le sens ; sinon
-  // on adopte automatiquement un sens valide pour cette case.
+  // Sur une case d'intersection, la direction active doit correspondre au
+  // mot que le joueur remplit réellement, sinon taper/supprimer une lettre
+  // peut suivre le MAUVAIS mot. Reclic sur la même intersection = bascule
+  // le sens (comportement standard des logiciels de mots croisés).
   const meta = cellMeta[`${r},${c}`];
   const sameCell = selectedCell && selectedCell.r === r && selectedCell.c === c;
   if (meta) {
@@ -338,7 +391,7 @@ function highlightActiveWord() {
   }
   const curInput = cellInputs[`${selectedCell.r},${selectedCell.c}`];
   if (curInput) curInput.parentElement.classList.add('active-cell');
-  document.getElementById('gameActiveClue').textContent = `${w.number}. ${w.clue}`;
+  document.getElementById('gameActiveClue').textContent = gameMode === 'croises' ? `${w.number}. ${w.clue}` : w.clue;
 }
 
 function onCellInput(e) {

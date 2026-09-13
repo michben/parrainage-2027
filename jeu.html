@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
+  <script>
+    // Meme theme que le site principal (cle localStorage partagee).
+    (function () {
+      var saved = localStorage.getItem('siteTheme');
+      if (saved === 'dark' || saved === 'light') document.documentElement.setAttribute('data-theme', saved);
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jeu — Mots croisés/fléchés des présidents | Présidentielle 2027</title>
@@ -33,6 +40,9 @@
       </div>
       <div class="header-actions">
         <a href="index.html" class="btn-secondary" style="text-decoration:none">← Retour au site</a>
+        <button class="icon-btn" id="themeToggle" title="Changer de thème" aria-label="Basculer le thème">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="themeIcon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
       </div>
     </div>
   </header>

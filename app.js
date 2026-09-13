@@ -488,6 +488,9 @@ document.getElementById('themeToggle').addEventListener('click', () => {
   const current = html.getAttribute('data-theme');
   const next = current === 'dark' ? 'light' : 'dark';
   html.setAttribute('data-theme', next);
+  // Memorise le choix : le jeu (jeu.html) relit la meme cle pour demarrer
+  // dans le meme theme que le site principal.
+  localStorage.setItem('siteTheme', next);
   const icon = document.getElementById('themeIcon');
   if (next === 'dark') {
     icon.innerHTML = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
@@ -533,7 +536,17 @@ function renderYoutubeButton() {
 // ============================================================
 // 10. INITIALISATION
 // ============================================================
+function syncThemeIcon() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const icon = document.getElementById('themeIcon');
+  if (!icon) return;
+  icon.innerHTML = isDark
+    ? '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+}
+
 async function init() {
+  syncThemeIcon();
   renderYoutubeButton();
   await loadGeoJSON();
   initMap();
