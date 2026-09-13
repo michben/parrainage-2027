@@ -83,15 +83,29 @@ document.getElementById('startGameBtn').addEventListener('click', startGame);
 // ============================================================
 async function fetchLeaderboard(level) {
   try {
-    const res = await fetch(`${API_BASE}/api/game/leaderboard?level=${level}`, { cache: 'no-store' });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 9000);
+    const res = await fetch(`${API_BASE}/api/game/leaderboard?level=${level}`, { cache: 'no-store', signal: controller.signal });
+    clearTimeout(timeoutId);
     if (!res.ok) throw new Error('bad status');
     return await res.json();
   } catch (err) {
-    return [];
+    return null; // distingue "pas encore de scores" (tableau vide) de "echec reseau"
   }
 }
 
-function renderLeaderboardList(container, entries, highlightUsername) {
+function renderLeaderboardList(container, entries, highlightUsername, retryLevel) {
+  if (entries === null) {
+    container.innerHTML = `
+      <p class="game-hint">⏳ Le service de classement met parfois 30-60s à se réveiller après une pause (hébergement gratuit).
+      <button type="button" class="btn-secondary" id="leaderboardRetryBtn" style="margin-left:8px">Réessayer</button></p>`;
+    document.getElementById('leaderboardRetryBtn')?.addEventListener('click', async () => {
+      container.innerHTML = '<p class="game-hint">Chargement…</p>';
+      const retried = await fetchLeaderboard(retryLevel || gameLevel);
+      renderLeaderboardList(container, retried, highlightUsername, retryLevel);
+    });
+    return;
+  }
   if (!entries.length) {
     container.innerHTML = '<p class="game-hint">Aucun score enregistré pour l\'instant — sois le premier !</p>';
     return;
@@ -113,7 +127,7 @@ async function loadLeaderboardPreview(level) {
   const container = document.getElementById('leaderboardPreviewList');
   container.innerHTML = '<p class="game-hint">Chargement…</p>';
   const entries = await fetchLeaderboard(level);
-  renderLeaderboardList(container, entries);
+  renderLeaderboardList(container, entries, null, level);
 }
 
 function escapeHtml(s) {
@@ -135,9 +149,9 @@ function buildCellMeta(grid) {
       const r = w.dir === 'H' ? w.row : w.row + i;
       const c = w.dir === 'H' ? w.col + i : w.col;
       const key = `${r},${c}`;
-      if (!meta[key]) meta[key] = { letter: w.word[i], words: [] };
+      if (!meta[key]) meta[key] = { letter: w.word[i], words: [], starts: [] };
       meta[key].words.push(idx);
-      if (i === 0) meta[key].number = w.number;
+      if (i === 0) { meta[key].number = w.number; meta[key].starts.push(w.dir); }
     }
   });
   return meta;
@@ -185,10 +199,24 @@ function renderGrid() {
       cellEl.className = 'game-cell' + (meta ? '' : ' blocked');
       if (meta) {
         if (meta.number) {
-          const num = document.createElement('span');
-          num.className = 'game-cell-number';
-          num.textContent = meta.number;
-          cellEl.appendChild(num);
+          const badge = document.createElement('span');
+          if (gameMode === 'fleches') {
+            // Vraies flèches (convention des mots fléchés), pas de numero :
+            // -> pour un mot qui se lit vers la droite, v pour vers le bas,
+            // combinaison si la case demarre les deux.
+            badge.className = 'game-cell-arrow';
+            const hasH = meta.starts.includes('H');
+            const hasV = meta.starts.includes('V');
+            badge.textContent = hasH && hasV ? '⌐' : hasH ? '→' : '↓';
+            badge.title = meta.starts.map(d => {
+              const w = currentGrid.words.find(x => x.row === r && x.col === c && x.dir === d);
+              return w ? w.clue : '';
+            }).join(' / ');
+          } else {
+            badge.className = 'game-cell-number';
+            badge.textContent = meta.number;
+          }
+          cellEl.appendChild(badge);
         }
         const input = document.createElement('input');
         input.type = 'text';
@@ -209,23 +237,31 @@ function renderGrid() {
 
 function renderClueList() {
   const listEl = document.getElementById('gameClueList');
+  const fleches = gameMode === 'fleches';
+  document.getElementById('gameActiveClue').classList.toggle('fleches-style', fleches);
+
+  if (fleches) {
+    // Vraies mots fléchés : pas de liste externe, tout est dans la grille
+    // (flèches + survol/tap) et dans le bandeau de définition au-dessus.
+    listEl.hidden = true;
+    listEl.innerHTML = '';
+    return;
+  }
+  listEl.hidden = false;
+
   const horiz = currentGrid.words.filter(w => w.dir === 'H').sort((a, b) => a.number - b.number);
   const vert = currentGrid.words.filter(w => w.dir === 'V').sort((a, b) => a.number - b.number);
 
-  const fleches = gameMode === 'fleches';
   listEl.innerHTML = `
-    ${fleches ? '<p class="game-hint">Mode mots fléchés : clique une case, la définition du mot apparaît au-dessus de la grille.</p>' : ''}
-    ${!fleches ? renderClueGroup('Horizontal', horiz) : ''}
-    ${!fleches ? renderClueGroup('Vertical', vert) : ''}
+    ${renderClueGroup('Horizontal', horiz)}
+    ${renderClueGroup('Vertical', vert)}
   `;
-  if (!fleches) {
-    listEl.querySelectorAll('[data-word-idx]').forEach(el => {
-      el.addEventListener('click', () => {
-        const w = currentGrid.words[Number(el.dataset.wordIdx)];
-        selectCell(w.row, w.col, w.dir);
-      });
+  listEl.querySelectorAll('[data-word-idx]').forEach(el => {
+    el.addEventListener('click', () => {
+      const w = currentGrid.words[Number(el.dataset.wordIdx)];
+      selectCell(w.row, w.col, w.dir);
     });
-  }
+  });
 }
 
 function renderClueGroup(title, words) {
@@ -247,6 +283,24 @@ function renderClueGroup(title, words) {
 // Sélection / saisie
 // ============================================================
 function onCellFocus(r, c) {
+  // Bug corrige : la direction active (selectedDir) ne se remettait pas a
+  // jour au simple focus, seulement via selectCell()/fleches. Resultat, sur
+  // une case d'intersection, taper ou supprimer une lettre pouvait suivre le
+  // mot dans l'AUTRE sens que celui que le joueur remplissait. On corrige
+  // ici : reclic sur la meme case d'intersection = bascule le sens ; sinon
+  // on adopte automatiquement un sens valide pour cette case.
+  const meta = cellMeta[`${r},${c}`];
+  const sameCell = selectedCell && selectedCell.r === r && selectedCell.c === c;
+  if (meta) {
+    if (sameCell && meta.words.length > 1) {
+      selectedDir = selectedDir === 'H' ? 'V' : 'H';
+    } else {
+      const hasCurrentDir = meta.words.some(idx => currentGrid.words[idx].dir === selectedDir);
+      if (!hasCurrentDir) {
+        selectedDir = meta.words.some(idx => currentGrid.words[idx].dir === 'H') ? 'H' : 'V';
+      }
+    }
+  }
   selectedCell = { r, c };
   highlightActiveWord();
 }
@@ -447,11 +501,15 @@ async function finishGame() {
   showScreen('screenResult');
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     const res = await fetch(`${API_BASE}/api/game/score`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: gameUsername, level: gameLevel, mode: gameMode, score, timeSeconds: rawSeconds, hintsUsed: letterHintsUsed + wordHintsUsed })
+      body: JSON.stringify({ username: gameUsername, level: gameLevel, mode: gameMode, score, timeSeconds: rawSeconds, hintsUsed: letterHintsUsed + wordHintsUsed }),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
     const data = await res.json();
     if (res.ok) {
       document.getElementById('resultRank').textContent = data.rank ? `Tu es ${data.rank}ᵉ au classement ${LEVEL_LABELS[gameLevel]} !` : 'Score enregistré !';
@@ -463,7 +521,7 @@ async function finishGame() {
   }
 
   const entries = await fetchLeaderboard(gameLevel);
-  renderLeaderboardList(document.getElementById('resultLeaderboard'), entries, gameUsername);
+  renderLeaderboardList(document.getElementById('resultLeaderboard'), entries, gameUsername, gameLevel);
 }
 
 document.getElementById('replayBtn').addEventListener('click', () => {
