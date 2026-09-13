@@ -343,6 +343,8 @@ function renderFooter() {
       <p class="footer-note">${content.rulesText}</p>
     `;
   }
+  const soutenirText = document.getElementById('soutenirText');
+  if (soutenirText) soutenirText.textContent = content.soutenirText || '';
 }
 
 // ============================================================
