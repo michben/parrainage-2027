@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parrainages 2027 — Carte interactive des candidats</title>
+  <meta name="description" content="Carte interactive de France montrant la répartition géographique des parrainages pour l'élection présidentielle 2027.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Crect width='8' height='16' fill='%23002060'/%3E%3Crect x='8' width='8' height='16' fill='white'/%3E%3Crect x='16' width='8' height='16' fill='%23ED2939'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo-group">
+        <div class="flag-logo">
+          <div class="flag-blue"></div>
+          <div class="flag-white"></div>
+          <div class="flag-red"></div>
+        </div>
+        <div>
+          <h1 class="site-title">Parrainages 2027</h1>
+          <p class="site-subtitle">Carte interactive des candidats à l'élection présidentielle</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="demo-badge" title="Données de démonstration — les parrainages officiels seront publiés par le Conseil constitutionnel à partir de février 2027">Données de démonstration</span>
+        <span class="icon-btn" id="dataStatus" title="État des données" aria-label="État des données"></span>
+        <button class="icon-btn" id="themeToggle" title="Changer de thème" aria-label="Basculer le thème">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="themeIcon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="rules-bar">
+    <div class="rule-item"><span class="rule-num">500</span><span class="rule-label">parrainages requis</span></div>
+    <div class="rule-divider"></div>
+    <div class="rule-item"><span class="rule-num">30</span><span class="rule-label">départements minimum</span></div>
+    <div class="rule-divider"></div>
+    <div class="rule-item"><span class="rule-num">50</span><span class="rule-label">max par département</span></div>
+    <div class="rule-divider"></div>
+    <div class="rule-item"><span class="rule-num">~45 000</span><span class="rule-label">élus habilités</span></div>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all">Tous (<span id="count-all">0</span>)</button>
+    <button class="filter-btn" data-filter="déclarée">Déclarés (<span id="count-déclarée">0</span>)</button>
+    <button class="filter-btn" data-filter="pressentie">Pressentis (<span id="count-pressentie">0</span>)</button>
+    <button class="filter-btn" data-filter="retirée">Retirés (<span id="count-retirée">0</span>)</button>
+    <button class="filter-btn" data-filter="hors_course">Hors course (<span id="count-hors_course">0</span>)</button>
+  </div>
+
+  <main class="dashboard">
+    <aside class="candidates-panel" id="candidatesPanel"></aside>
+    <section class="map-section">
+      <div class="map-header">
+        <div>
+          <h2 class="map-title" id="mapTitle">Sélectionnez un candidat</h2>
+          <p class="map-subtitle" id="mapSubtitle">Cliquez sur un candidat dans la liste pour voir la carte de ses parrainages</p>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="map-container" id="mapContainer">
+        <svg id="mapSvg"></svg>
+        <div class="tooltip" id="tooltip"></div>
+      </div>
+    </section>
+    <aside class="stats-panel" id="statsPanel">
+      <div class="stats-empty">Sélectionnez un candidat pour voir ses statistiques</div>
+    </aside>
+  </main>
+
+  <section class="comparison-section">
+    <h2 class="section-title">Classement des candidats</h2>
+    <div class="comparison-table-wrap">
+      <table class="comparison-table" id="comparisonTable"></table>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>Données de démonstration — Les parrainages officiels seront publiés par le <a href="https://www.conseil-constitutionnel.fr" target="_blank" rel="noopener">Conseil constitutionnel</a> à partir de février 2027.</p>
+      <p class="footer-sources">Sources : <a href="https://www.conseil-constitutionnel.fr" target="_blank" rel="noopener">Conseil constitutionnel</a> · <a href="https://www.france-vote.fr/actualites/parrainages-presidentielle-2027-500-signatures" target="_blank" rel="noopener">France-Vote.fr</a> · <a href="https://lcp.fr/actualites/presidentielle-2027-la-liste-des-candidats-deja-en-lice-et-des-pretendants-436373" target="_blank" rel="noopener">LCP</a> · <a href="https://www.lejdd.fr/politique/presidentielle-2027-la-liste-des-40-candidats-declares-ou-pressentis-177960" target="_blank" rel="noopener">Le JDD</a> · <a href="https://2027.help/candidates-2027" target="_blank" rel="noopener">2027.help</a> · <a href="https://www.candidatspresidentielles2027.fr" target="_blank" rel="noopener">candidatspresidentielles2027.fr</a> · <a href="https://fr.wikipedia.org/wiki/Candidatures_%C3%A0_l%27%C3%A9lection_pr%C3%A9sidentielle_fran%C3%A7aise_de_2027" target="_blank" rel="noopener">Wikipedia</a></p>
+      <p class="footer-note">Règles : 500 signatures d'élus · 30 départements minimum · 50 maximum par département · Loi organique du 18 juin 1976</p>
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="data-loader.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
