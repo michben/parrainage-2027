@@ -113,16 +113,6 @@ a:hover { text-decoration: underline; }
 }
 .site-subtitle { font-size: 12px; color: var(--text-muted); }
 .header-actions { display: flex; align-items: center; gap: 8px; }
-.demo-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 20px;
-  background: rgba(193,18,31,0.1);
-  color: var(--color-primary);
-  border: 1px solid rgba(193,18,31,0.2);
-  white-space: nowrap;
-}
 .icon-btn {
   display: flex;
   align-items: center;
@@ -182,10 +172,14 @@ a:hover { text-decoration: underline; }
   margin: 0 auto;
   padding: 0 20px;
   display: grid;
-  grid-template-columns: 320px 1fr 340px;
+  grid-template-columns: minmax(240px,320px) 1fr minmax(260px,340px);
+  grid-template-areas: "cands map stats";
   gap: 16px;
   align-items: start;
 }
+.candidates-panel { grid-area: cands; }
+.map-section { grid-area: map; min-width: 0; }
+.stats-panel { grid-area: stats; }
 
 /* --- Candidates panel --- */
 .candidates-panel {
@@ -770,17 +764,53 @@ a:hover { text-decoration: underline; }
 .quiz-disclaimer { font-size: 11px; color: var(--text-faint); margin-top: 14px; }
 
 /* --- Responsive --- */
-@media (max-width: 1100px) {
-  .dashboard { grid-template-columns: 1fr; }
-  .candidates-panel, .stats-panel { position: static; max-height: none; }
-  .candidates-panel { max-height: 400px; }
+
+/* Tablette : deux colonnes (candidats + carte), stats en pleine largeur dessous */
+@media (max-width: 1100px) and (min-width: 769px) {
+  .dashboard {
+    grid-template-columns: 260px 1fr;
+    grid-template-areas: "cands map" "stats stats";
+  }
+  .candidates-panel { max-height: 560px; }
+  .stats-panel { position: static; }
 }
-@media (max-width: 600px) {
-  .header-inner { flex-wrap: wrap; }
-  .demo-badge { display: none; }
-  .rules-bar { gap: 4px; }
-  .rule-item { padding: 0 8px; }
-  .rule-divider { display: none; }
+
+/* Mobile : tout empilé en une colonne */
+@media (max-width: 768px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+    grid-template-areas: "cands" "map" "stats";
+    padding: 0 12px;
+    gap: 12px;
+  }
+  .candidates-panel, .stats-panel { position: static; max-height: none; }
+  .candidates-panel { max-height: 340px; }
+  .header-inner { flex-wrap: wrap; padding: 10px 12px; }
+  .header-actions { flex-wrap: wrap; gap: 6px; }
+  .rules-bar { padding: 8px 12px; }
+  .rule-item { padding: 0 10px; }
+  .filter-bar { padding: 10px 12px; }
+  .comparison-section { padding: 0 12px; }
+  .map-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .legend { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+  .site-footer { padding: 20px 12px; }
   .admin-dept-list { grid-template-columns: 1fr; }
   .quiz-theme-grid { grid-template-columns: 1fr; }
+  .quiz-nav-row { flex-direction: column; align-items: stretch; }
+  .quiz-nav-buttons { justify-content: space-between; }
+  .quiz-modal, .admin-modal { max-height: 92vh; }
+}
+
+/* Petits téléphones : compacter l'en-tête et les puces de règles */
+@media (max-width: 480px) {
+  .site-title { font-size: 18px; }
+  .site-subtitle { display: none; }
+  .quiz-cta-btn { padding: 6px 10px; font-size: 11px; }
+  .rules-bar { gap: 2px; }
+  .rule-item { padding: 0 8px; }
+  .rule-num { font-size: 16px; }
+  .rule-label { font-size: 9px; }
+  .rule-divider { display: none; }
+  .map-container { min-height: 360px; }
+  .quiz-result-cards { grid-template-columns: 1fr 1fr; }
 }

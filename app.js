@@ -119,7 +119,7 @@ async function loadGeoJSON() {
 function initMap() {
   const container = document.getElementById('mapContainer');
   const width = container.clientWidth;
-  const height = Math.max(500, width * 0.75);
+  const height = width < 500 ? Math.max(320, width * 0.9) : Math.max(500, width * 0.75);
 
   mapSvg = d3.select('#mapSvg')
     .attr('viewBox', `0 0 ${width} ${height}`)
@@ -135,6 +135,16 @@ function initMap() {
 
   renderMap();
 }
+
+// Redessine la carte au redimensionnement (rotation d'écran, fenêtre
+// redimensionnée) : sans ça la carte gardait la taille figée du chargement
+// initial et paraissait cassée sur mobile après un changement d'orientation.
+let mapResizeTimeout = null;
+window.addEventListener('resize', () => {
+  if (!geoJsonData) return;
+  clearTimeout(mapResizeTimeout);
+  mapResizeTimeout = setTimeout(initMap, 200);
+});
 
 function renderMap() {
   if (!geoJsonData || !selectedCandidateId) return;
