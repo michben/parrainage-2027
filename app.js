@@ -62,6 +62,10 @@ function avatarHtml(cand, extraStyle) {
 // ============================================================
 function renderCandidates() {
   const panel = document.getElementById('candidatesPanel');
+  // Remplacer innerHTML réinitialise le scroll du panneau à zéro : sans
+  // ceci, cliquer un candidat en bas de liste faisait "sauter" la liste
+  // en haut à chaque sélection.
+  const scrollPos = panel.scrollTop;
   const cands = getActiveCandidates();
   const filtered = currentFilter === 'all' ? cands : cands.filter(c => c.statut === currentFilter);
 
@@ -82,6 +86,7 @@ function renderCandidates() {
   panel.querySelectorAll('.candidate-card').forEach(card => {
     card.addEventListener('click', () => selectCandidate(card.dataset.id));
   });
+  panel.scrollTop = scrollPos;
 
   updateFilterCounts();
 }
