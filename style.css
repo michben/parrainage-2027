@@ -224,6 +224,7 @@ a:hover { text-decoration: underline; }
   font-size: 14px;
   color: #fff;
   flex-shrink: 0;
+  object-fit: cover;
 }
 .cand-info { flex: 1; min-width: 0; }
 .cand-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; }

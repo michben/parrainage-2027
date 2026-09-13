@@ -36,6 +36,28 @@ let geoJsonData = null;
 let mapSvg, mapPath, mapProjection;
 
 // ============================================================
+// 0. AVATAR (photo si disponible, sinon initiales colorées)
+// ============================================================
+function handleAvatarError(img, initials, color) {
+  const div = document.createElement('div');
+  div.className = img.className;
+  div.style.cssText = img.style.cssText;
+  div.style.background = color;
+  div.textContent = initials;
+  img.replaceWith(div);
+}
+
+function avatarHtml(cand, extraStyle) {
+  const initials = cand.nom.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const fiche = getActiveFiches()[cand.id] || {};
+  const style = extraStyle || '';
+  if (fiche.photo) {
+    return `<img class="cand-avatar" style="${style}" src="${fiche.photo}" alt="${cand.nom}" loading="lazy" onerror="handleAvatarError(this,'${initials}','${cand.couleur}')">`;
+  }
+  return `<div class="cand-avatar" style="background:${cand.couleur};${style}">${initials}</div>`;
+}
+
+// ============================================================
 // 1. RENDU DES CANDIDATS (panneau de gauche)
 // ============================================================
 function renderCandidates() {
@@ -45,11 +67,10 @@ function renderCandidates() {
 
   panel.innerHTML = filtered.map(cand => {
     const stats = getCandidateStats(cand.id);
-    const initials = cand.nom.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     const statusClass = cand.statut.replace(/[^a-z_]/g, '');
     return `
       <div class="candidate-card ${selectedCandidateId === cand.id ? 'active' : ''}" data-id="${cand.id}">
-        <div class="cand-avatar" style="background:${cand.couleur}">${initials}</div>
+        ${avatarHtml(cand)}
         <div class="cand-info">
           <div class="cand-name"><span class="status-dot-small ${statusClass}"></span>${cand.nom}</div>
           <div class="cand-party">${cand.parti}</div>
@@ -192,9 +213,7 @@ function renderStats(cand) {
 
   panel.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-      <div class="cand-avatar" style="background:${cand.couleur};width:48px;height:48px;font-size:16px">
-        ${cand.nom.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()}
-      </div>
+      ${avatarHtml(cand, 'width:48px;height:48px;font-size:16px')}
       <div>
         <div class="stats-candidate-name">${cand.nom}</div>
         <div class="stats-candidate-party">${cand.parti}</div>
