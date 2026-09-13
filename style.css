@@ -37,10 +37,10 @@
   --text: #212529;
   --text-muted: #6c757d;
   --text-faint: #adb5bd;
-  --map-bg: #ffffff;
+  --map-bg: #eef2f6;
   --map-fill: #e9ecef;
-  --map-stroke: #ced4da;
-  --map-empty: #f1f3f5;
+  --map-stroke: #8b9aa8;
+  --map-empty: #ccd6df;
   --header-bg: #ffffff;
   --card-bg: #ffffff;
   --hover-bg: #f1f3f5;
@@ -56,10 +56,10 @@
   --text: #e4e6eb;
   --text-muted: #9ca3af;
   --text-faint: #6b7280;
-  --map-bg: #1a1d29;
+  --map-bg: #11141d;
   --map-fill: #2a2e3a;
-  --map-stroke: #3a3f4d;
-  --map-empty: #222633;
+  --map-stroke: #5b6577;
+  --map-empty: #383f4f;
   --header-bg: #1a1d29;
   --card-bg: #1a1d29;
   --hover-bg: #222633;
@@ -162,6 +162,7 @@ a:hover { text-decoration: underline; }
   align-items: baseline;
   justify-content: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 .countdown-unit { display: flex; flex-direction: column; align-items: center; min-width: 72px; }
 .countdown-value {
@@ -181,6 +182,8 @@ a:hover { text-decoration: underline; }
 }
 .countdown-sep { font-family: var(--font-display); font-size: 40px; color: rgba(255,255,255,0.4); align-self: flex-start; margin-top: 2px; }
 .countdown-target { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 12px; }
+.countdown-total-minutes { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 4px; }
+.countdown-total-minutes span { font-weight: 700; font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.85); }
 
 /* --- Filter bar --- */
 .filter-bar {
@@ -924,10 +927,10 @@ a:hover { text-decoration: underline; }
   .rule-num { font-size: 16px; }
   .rule-label { font-size: 9px; }
   .rule-divider { display: none; }
-  .countdown-value { font-size: 34px; }
-  .countdown-sep { font-size: 28px; }
-  .countdown-unit { min-width: 54px; }
-  .countdown-grid { gap: 6px; }
+  .countdown-value { font-size: 28px; }
+  .countdown-sep { font-size: 22px; }
+  .countdown-unit { min-width: 44px; }
+  .countdown-grid { gap: 4px; }
   .map-container { min-height: 360px; }
   .quiz-result-cards { grid-template-columns: 1fr 1fr; }
 }

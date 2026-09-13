@@ -6,10 +6,16 @@
 // ============================================================
 const COUNTDOWN_TARGET = new Date('2027-05-02T20:00:00+02:00').getTime();
 
+function formatThousands(n) {
+  return n.toLocaleString('fr-FR');
+}
+
 function updateCountdown() {
   const daysEl = document.getElementById('cdDays');
   const hoursEl = document.getElementById('cdHours');
   const minutesEl = document.getElementById('cdMinutes');
+  const secondsEl = document.getElementById('cdSeconds');
+  const totalMinutesEl = document.getElementById('cdTotalMinutes');
   if (!daysEl) return;
 
   const remainingMs = COUNTDOWN_TARGET - Date.now();
@@ -17,18 +23,24 @@ function updateCountdown() {
     daysEl.textContent = '0';
     hoursEl.textContent = '00';
     minutesEl.textContent = '00';
+    secondsEl.textContent = '00';
+    totalMinutesEl.textContent = '0';
     document.querySelector('.countdown-label').textContent = 'Le prochain président a été élu';
     return;
   }
 
-  const totalMinutes = Math.floor(remainingMs / 60000);
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const totalMinutes = Math.floor(totalSeconds / 60);
   const days = Math.floor(totalMinutes / 1440);
   const hours = Math.floor((totalMinutes % 1440) / 60);
   const minutes = totalMinutes % 60;
+  const seconds = totalSeconds % 60;
 
   daysEl.textContent = String(days);
   hoursEl.textContent = String(hours).padStart(2, '0');
   minutesEl.textContent = String(minutes).padStart(2, '0');
+  secondsEl.textContent = String(seconds).padStart(2, '0');
+  totalMinutesEl.textContent = formatThousands(totalMinutes);
 }
 
 updateCountdown();

@@ -182,10 +182,14 @@ function renderMap() {
     .attr('fill-opacity', d => {
       const code = d.properties.code;
       const val = data[code] || 0;
-      return getOpacityForValue(val);
+      // Les départements à 0 gardent un remplissage plein (gris "vide") : sans
+      // ce cas à part, ils héritaient de la même échelle que les valeurs
+      // positives (opacité 0 pour "0"), ce qui les rendait totalement
+      // transparents et faisait disparaître une bonne partie de la carte.
+      return val === 0 ? 1 : getOpacityForValue(val);
     })
     .attr('stroke', 'var(--map-stroke)')
-    .attr('stroke-width', 0.5)
+    .attr('stroke-width', 0.75)
     .on('mouseover', (event, d) => {
       const code = d.properties.code;
       const name = DEPARTEMENTS[code] || d.properties.nom;
