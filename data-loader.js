@@ -193,7 +193,8 @@ const SITE_LINKS = [
 const SITE_CONTENT = {
   aboutText: 'Cette application présente les candidats à l\'élection présidentielle 2027 et la carte de leurs parrainages. Les données de parrainage sont de démonstration : le Conseil constitutionnel publiera les comptes officiels à partir de février 2027.',
   soutenirText: 'Pour soutenir un candidat, consultez sa fiche détaillée et cliquez sur le lien de soutien.',
-  rulesText: '500 signatures d\'élus · 30 départements minimum · 50 maximum par département · Loi organique du 18 juin 1976'
+  rulesText: '500 signatures d\'élus · 30 départements minimum · 50 maximum par département · Loi organique du 18 juin 1976',
+  youtubeUrl: ''
 };
 
 // ============================================================

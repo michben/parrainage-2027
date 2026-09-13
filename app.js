@@ -348,18 +348,17 @@ function renderFooter() {
 }
 
 // ============================================================
-// 9. INDICATEUR D'ÉTAT DES DONNÉES
+// 9. BOUTON VIDÉO (lien YouTube configurable depuis l'admin)
 // ============================================================
-function renderDataStatus() {
-  const el = document.getElementById('dataStatus');
+function renderYoutubeButton() {
+  const el = document.getElementById('youtubeBtn');
   if (!el) return;
-  if (usingFallback) {
-    el.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>';
-    el.title = 'Données de démonstration hors-ligne — le service admin met parfois 30-60s à se réveiller après une période sans visite. Réessayez dans une minute.';
-    el.style.color = '#f4a261';
+  const url = getActiveContent().youtubeUrl;
+  if (url) {
+    el.href = url;
+    el.hidden = false;
   } else {
-    el.innerHTML = '';
-    el.title = '';
+    el.hidden = true;
   }
 }
 
@@ -367,7 +366,7 @@ function renderDataStatus() {
 // 10. INITIALISATION
 // ============================================================
 async function init() {
-  renderDataStatus();
+  renderYoutubeButton();
   await loadGeoJSON();
   initMap();
   renderCandidates();
