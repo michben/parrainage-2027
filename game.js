@@ -36,6 +36,7 @@ document.getElementById('themeToggle')?.addEventListener('click', () => {
 });
 
 let gameUsername = '';
+let authToken = localStorage.getItem('gameAuthToken') || '';
 let gameMode = 'croises';
 let gameLevel = 'facile';
 let currentGrid = null;      // { rows, cols, words }
@@ -52,21 +53,157 @@ let wordHintsUsed = 0;
 let solvedWords = new Set();
 
 // ============================================================
-// Écran 1 — pseudo
+// Écran 1 — pseudo (libre, sans inscription) OU compte (email/téléphone/X)
 // ============================================================
 const savedUsername = localStorage.getItem('gameUsername') || '';
 document.getElementById('usernameInput').value = savedUsername;
+
+function authHeaders() {
+  return authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+}
+
+function proceedToSetup(name, accountBadge) {
+  gameUsername = name;
+  document.getElementById('setupUsername').textContent = name;
+  const badgeEl = document.getElementById('setupAccountBadge');
+  if (accountBadge) {
+    badgeEl.innerHTML = `${accountBadge} — <a href="#" id="logoutLink">se déconnecter</a>`;
+    badgeEl.hidden = false;
+    document.getElementById('logoutLink').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', headers: authHeaders() }).catch(() => {});
+      authToken = '';
+      localStorage.removeItem('gameAuthToken');
+      location.reload();
+    });
+  } else {
+    badgeEl.hidden = true;
+  }
+  showScreen('screenSetup');
+  updateLevelInfo();
+  loadLeaderboardPreview();
+}
 
 document.getElementById('usernameForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const val = document.getElementById('usernameInput').value.trim().slice(0, 20);
   if (!val) return;
-  gameUsername = val;
+  authToken = '';
+  localStorage.removeItem('gameAuthToken');
   localStorage.setItem('gameUsername', val);
-  document.getElementById('setupUsername').textContent = val;
-  showScreen('screenSetup');
-  updateLevelInfo();
-  loadLeaderboardPreview();
+  proceedToSetup(val, null);
+});
+
+// --- Onglets Email / Téléphone / X ---
+document.querySelectorAll('#authTabs .game-choice').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#authTabs .game-choice').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.auth-pane').forEach(p => { p.hidden = true; });
+    document.getElementById('authPane-' + btn.dataset.authTab).hidden = false;
+  });
+});
+
+async function loginWithToken(token) {
+  authToken = token;
+  localStorage.setItem('gameAuthToken', token);
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/me`, { headers: authHeaders() });
+    if (!res.ok) throw new Error('session invalide');
+    const data = await res.json();
+    localStorage.setItem('gameUsername', data.user.displayName);
+    const identity = data.user.email || data.user.phone || (data.user.xUsername ? '@' + data.user.xUsername : '');
+    proceedToSetup(data.user.displayName, `Connecté via compte (${identity})`);
+    return true;
+  } catch (err) {
+    authToken = '';
+    localStorage.removeItem('gameAuthToken');
+    return false;
+  }
+}
+
+// Lien magique par email ou retour de connexion X : le jeton arrive dans
+// le fragment d'URL (#authToken=...), jamais dans l'historique du navigateur.
+(function checkAuthTokenInUrl() {
+  const match = /authToken=([^&]+)/.exec(window.location.hash);
+  if (match) {
+    history.replaceState(null, '', window.location.pathname);
+    loginWithToken(decodeURIComponent(match[1]));
+  } else if (authToken) {
+    loginWithToken(authToken);
+  }
+})();
+
+document.getElementById('emailRequestForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('emailInput').value.trim();
+  const statusEl = document.getElementById('emailStatus');
+  statusEl.textContent = 'Envoi…';
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/email/request`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 501) statusEl.textContent = 'Cette méthode n\'est pas encore activée.';
+    else if (!res.ok) statusEl.textContent = data.error || 'Erreur, réessaie plus tard.';
+    else statusEl.textContent = '📩 Vérifie tes emails : le lien est valable 15 minutes.';
+  } catch (err) {
+    statusEl.textContent = 'Service indisponible, réessaie plus tard.';
+  }
+});
+
+let pendingPhone = '';
+document.getElementById('phoneRequestForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const phone = document.getElementById('phoneInput').value.trim();
+  const statusEl = document.getElementById('phoneStatus');
+  statusEl.textContent = 'Envoi…';
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/phone/request`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 501) statusEl.textContent = 'Cette méthode n\'est pas encore activée.';
+    else if (!res.ok) statusEl.textContent = data.error || 'Erreur, réessaie plus tard.';
+    else {
+      pendingPhone = phone;
+      statusEl.textContent = '📩 Code envoyé par SMS.';
+      document.getElementById('phoneVerifyForm').hidden = false;
+    }
+  } catch (err) {
+    statusEl.textContent = 'Service indisponible, réessaie plus tard.';
+  }
+});
+
+document.getElementById('phoneVerifyForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const code = document.getElementById('phoneCodeInput').value.trim();
+  const statusEl = document.getElementById('phoneStatus');
+  statusEl.textContent = 'Vérification…';
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/phone/verify`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: pendingPhone, code })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { statusEl.textContent = data.error || 'Code invalide.'; return; }
+    await loginWithToken(data.sessionToken);
+  } catch (err) {
+    statusEl.textContent = 'Service indisponible, réessaie plus tard.';
+  }
+});
+
+document.getElementById('xLoginBtn').addEventListener('click', async () => {
+  const statusEl = document.getElementById('xStatus');
+  statusEl.textContent = 'Connexion…';
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/x/start`);
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 501) { statusEl.textContent = 'Cette méthode n\'est pas encore activée.'; return; }
+    if (!res.ok || !data.authorizeUrl) { statusEl.textContent = 'Erreur, réessaie plus tard.'; return; }
+    window.location.href = data.authorizeUrl;
+  } catch (err) {
+    statusEl.textContent = 'Service indisponible, réessaie plus tard.';
+  }
 });
 
 // ============================================================
@@ -558,7 +695,7 @@ async function finishGame() {
     const timeoutId = setTimeout(() => controller.abort(), 55000);
     const res = await fetch(`${API_BASE}/api/game/score`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ username: gameUsername, level: gameLevel, mode: gameMode, score, timeSeconds: rawSeconds, hintsUsed: letterHintsUsed + wordHintsUsed }),
       signal: controller.signal
     });
@@ -612,7 +749,7 @@ async function fetchMysteryState() {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 45000);
-    const res = await fetch(`${API_BASE}/api/mystery/state?username=${encodeURIComponent(gameUsername)}`, { cache: 'no-store', signal: controller.signal });
+    const res = await fetch(`${API_BASE}/api/mystery/state?username=${encodeURIComponent(gameUsername)}`, { cache: 'no-store', signal: controller.signal, headers: authHeaders() });
     clearTimeout(timeoutId);
     if (!res.ok) throw new Error('bad status');
     return await res.json();
@@ -710,7 +847,7 @@ async function placeMysteryPiece(index) {
     const timeoutId = setTimeout(() => controller.abort(), 45000);
     const res = await fetch(`${API_BASE}/api/mystery/place`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ username: gameUsername, pieceIndex: index }),
       signal: controller.signal
     });
@@ -737,7 +874,7 @@ document.getElementById('mysteryGuessForm').addEventListener('submit', async (e)
     const timeoutId = setTimeout(() => controller.abort(), 45000);
     const res = await fetch(`${API_BASE}/api/mystery/guess`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ username: gameUsername, guess }),
       signal: controller.signal
     });

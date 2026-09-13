@@ -52,16 +52,50 @@
     <!-- Écran 1 : pseudo -->
     <section class="game-panel" id="screenUsername">
       <h2>Entre ton pseudo</h2>
-      <p class="game-hint">Aucune inscription : juste un nom d'utilisateur pour apparaître au classement.</p>
+      <p class="game-hint">Aucune inscription obligatoire : juste un nom d'utilisateur pour apparaître au classement.</p>
       <form id="usernameForm" class="game-username-form">
         <input type="text" id="usernameInput" placeholder="Ton pseudo" maxlength="20" required autocomplete="off">
         <button type="submit" class="btn-primary">Jouer</button>
       </form>
+
+      <div class="auth-divider"><span>ou connecte-toi avec un compte</span></div>
+
+      <div class="game-choice-group" id="authTabs">
+        <button type="button" class="game-choice active" data-auth-tab="email">Email</button>
+        <button type="button" class="game-choice" data-auth-tab="phone">Téléphone</button>
+        <button type="button" class="game-choice" data-auth-tab="x">X</button>
+      </div>
+
+      <div id="authPane-email" class="auth-pane">
+        <form id="emailRequestForm" class="game-username-form">
+          <input type="email" id="emailInput" placeholder="ton@email.com" required autocomplete="off">
+          <button type="submit" class="btn-secondary">Recevoir un lien</button>
+        </form>
+        <p class="game-hint" id="emailStatus"></p>
+      </div>
+
+      <div id="authPane-phone" class="auth-pane" hidden>
+        <form id="phoneRequestForm" class="game-username-form">
+          <input type="tel" id="phoneInput" placeholder="+33612345678" required autocomplete="off">
+          <button type="submit" class="btn-secondary">Recevoir un code</button>
+        </form>
+        <form id="phoneVerifyForm" class="game-username-form" hidden>
+          <input type="text" id="phoneCodeInput" placeholder="Code reçu par SMS" maxlength="6" autocomplete="off">
+          <button type="submit" class="btn-primary">Valider</button>
+        </form>
+        <p class="game-hint" id="phoneStatus"></p>
+      </div>
+
+      <div id="authPane-x" class="auth-pane" hidden>
+        <button type="button" class="btn-secondary" id="xLoginBtn" style="width:100%">🔗 Se connecter avec X</button>
+        <p class="game-hint" id="xStatus"></p>
+      </div>
     </section>
 
     <!-- Écran 2 : choix mode + niveau -->
     <section class="game-panel" id="screenSetup" hidden>
       <h2>Salut <span id="setupUsername"></span> 👋</h2>
+      <p class="game-hint" id="setupAccountBadge" hidden></p>
       <div class="game-setup-row">
         <div>
           <p class="game-setup-label">Mode</p>
