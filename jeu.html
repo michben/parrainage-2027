@@ -62,7 +62,6 @@
 
       <div class="game-choice-group" id="authTabs">
         <button type="button" class="game-choice active" data-auth-tab="email">Email</button>
-        <button type="button" class="game-choice" data-auth-tab="phone">Téléphone</button>
         <button type="button" class="game-choice" data-auth-tab="x">X</button>
       </div>
 
@@ -72,18 +71,6 @@
           <button type="submit" class="btn-secondary">Recevoir un lien</button>
         </form>
         <p class="game-hint" id="emailStatus"></p>
-      </div>
-
-      <div id="authPane-phone" class="auth-pane" hidden>
-        <form id="phoneRequestForm" class="game-username-form">
-          <input type="tel" id="phoneInput" placeholder="+33612345678" required autocomplete="off">
-          <button type="submit" class="btn-secondary">Recevoir un code</button>
-        </form>
-        <form id="phoneVerifyForm" class="game-username-form" hidden>
-          <input type="text" id="phoneCodeInput" placeholder="Code reçu par SMS" maxlength="6" autocomplete="off">
-          <button type="submit" class="btn-primary">Valider</button>
-        </form>
-        <p class="game-hint" id="phoneStatus"></p>
       </div>
 
       <div id="authPane-x" class="auth-pane" hidden>

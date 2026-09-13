@@ -53,7 +53,7 @@ let wordHintsUsed = 0;
 let solvedWords = new Set();
 
 // ============================================================
-// Écran 1 — pseudo (libre, sans inscription) OU compte (email/téléphone/X)
+// Écran 1 — pseudo (libre, sans inscription) OU compte (email/X)
 // ============================================================
 const savedUsername = localStorage.getItem('gameUsername') || '';
 document.getElementById('usernameInput').value = savedUsername;
@@ -94,7 +94,7 @@ document.getElementById('usernameForm').addEventListener('submit', (e) => {
   proceedToSetup(val, null);
 });
 
-// --- Onglets Email / Téléphone / X ---
+// --- Onglets Email / X ---
 document.querySelectorAll('#authTabs .game-choice').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#authTabs .game-choice').forEach(b => b.classList.remove('active'));
@@ -112,7 +112,7 @@ async function loginWithToken(token) {
     if (!res.ok) throw new Error('session invalide');
     const data = await res.json();
     localStorage.setItem('gameUsername', data.user.displayName);
-    const identity = data.user.email || data.user.phone || (data.user.xUsername ? '@' + data.user.xUsername : '');
+    const identity = data.user.email || (data.user.xUsername ? '@' + data.user.xUsername : '');
     proceedToSetup(data.user.displayName, `Connecté via compte (${identity})`);
     return true;
   } catch (err) {
@@ -147,46 +147,6 @@ document.getElementById('emailRequestForm').addEventListener('submit', async (e)
     if (res.status === 501) statusEl.textContent = 'Cette méthode n\'est pas encore activée.';
     else if (!res.ok) statusEl.textContent = data.error || 'Erreur, réessaie plus tard.';
     else statusEl.textContent = '📩 Vérifie tes emails : le lien est valable 15 minutes.';
-  } catch (err) {
-    statusEl.textContent = 'Service indisponible, réessaie plus tard.';
-  }
-});
-
-let pendingPhone = '';
-document.getElementById('phoneRequestForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const phone = document.getElementById('phoneInput').value.trim();
-  const statusEl = document.getElementById('phoneStatus');
-  statusEl.textContent = 'Envoi…';
-  try {
-    const res = await fetch(`${API_BASE}/api/auth/phone/request`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone })
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.status === 501) statusEl.textContent = 'Cette méthode n\'est pas encore activée.';
-    else if (!res.ok) statusEl.textContent = data.error || 'Erreur, réessaie plus tard.';
-    else {
-      pendingPhone = phone;
-      statusEl.textContent = '📩 Code envoyé par SMS.';
-      document.getElementById('phoneVerifyForm').hidden = false;
-    }
-  } catch (err) {
-    statusEl.textContent = 'Service indisponible, réessaie plus tard.';
-  }
-});
-
-document.getElementById('phoneVerifyForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const code = document.getElementById('phoneCodeInput').value.trim();
-  const statusEl = document.getElementById('phoneStatus');
-  statusEl.textContent = 'Vérification…';
-  try {
-    const res = await fetch(`${API_BASE}/api/auth/phone/verify`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: pendingPhone, code })
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) { statusEl.textContent = data.error || 'Code invalide.'; return; }
-    await loginWithToken(data.sessionToken);
   } catch (err) {
     statusEl.textContent = 'Service indisponible, réessaie plus tard.';
   }
