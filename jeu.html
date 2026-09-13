@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jeu — Mots croisés/fléchés des présidents | Présidentielle 2027</title>
+  <meta name="description" content="Petit jeu de mots croisés et mots fléchés sur l'histoire politique française : présidents, épouses, événements marquants. Sans inscription, juste un pseudo.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="game.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 16'%3E%3Crect width='8' height='16' fill='%23002060'/%3E%3Crect x='8' width='8' height='16' fill='white'/%3E%3Crect x='16' width='8' height='16' fill='%23ED2939'/%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo-group">
+        <a href="index.html" class="flag-logo" style="text-decoration:none;display:flex">
+          <div class="flag-blue"></div><div class="flag-white"></div><div class="flag-red"></div>
+        </a>
+        <div>
+          <h1 class="site-title">🧩 Le jeu des présidents</h1>
+          <p class="site-subtitle">Mots croisés & mots fléchés sur l'histoire politique française</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="index.html" class="btn-secondary" style="text-decoration:none">← Retour au site</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="game-wrap">
+
+    <!-- Écran 1 : pseudo -->
+    <section class="game-panel" id="screenUsername">
+      <h2>Entre ton pseudo</h2>
+      <p class="game-hint">Aucune inscription : juste un nom d'utilisateur pour apparaître au classement.</p>
+      <form id="usernameForm" class="game-username-form">
+        <input type="text" id="usernameInput" placeholder="Ton pseudo" maxlength="20" required autocomplete="off">
+        <button type="submit" class="btn-primary">Jouer</button>
+      </form>
+    </section>
+
+    <!-- Écran 2 : choix mode + niveau -->
+    <section class="game-panel" id="screenSetup" hidden>
+      <h2>Salut <span id="setupUsername"></span> 👋</h2>
+      <div class="game-setup-row">
+        <div>
+          <p class="game-setup-label">Mode</p>
+          <div class="game-choice-group" id="modeChoice">
+            <button type="button" class="game-choice active" data-mode="croises">Mots croisés</button>
+            <button type="button" class="game-choice" data-mode="fleches">Mots fléchés</button>
+          </div>
+        </div>
+        <div>
+          <p class="game-setup-label">Niveau</p>
+          <div class="game-choice-group" id="levelChoice">
+            <button type="button" class="game-choice active" data-level="facile">Facile</button>
+            <button type="button" class="game-choice" data-level="moyen">Moyen</button>
+            <button type="button" class="game-choice" data-level="difficile">Difficile</button>
+          </div>
+        </div>
+      </div>
+      <p class="game-hint" id="levelInfo"></p>
+      <button type="button" class="btn-primary" id="startGameBtn" style="margin-top:16px">Commencer la grille</button>
+
+      <div class="game-leaderboard-preview">
+        <h3>Meilleurs scores</h3>
+        <div class="game-choice-group" id="leaderboardLevelChoice">
+          <button type="button" class="game-choice active" data-level="facile">Facile</button>
+          <button type="button" class="game-choice" data-level="moyen">Moyen</button>
+          <button type="button" class="game-choice" data-level="difficile">Difficile</button>
+        </div>
+        <div id="leaderboardPreviewList" class="game-leaderboard-list"></div>
+      </div>
+    </section>
+
+    <!-- Écran 3 : jeu -->
+    <section class="game-panel game-play-panel" id="screenPlay" hidden>
+      <div class="game-play-topbar">
+        <div class="game-timer">⏱ <span id="gameTimer">00:00</span></div>
+        <div class="game-progress"><span id="gameProgress">0</span> / <span id="gameTotalWords"></span> mots</div>
+        <div class="game-hint-buttons">
+          <button type="button" class="btn-secondary" id="revealLetterBtn">💡 Lettre</button>
+          <button type="button" class="btn-secondary" id="revealWordBtn">🔍 Mot</button>
+        </div>
+      </div>
+      <div class="game-active-clue" id="gameActiveClue">Clique sur une case pour commencer.</div>
+      <div class="game-play-body">
+        <div class="game-grid-scroll">
+          <div id="gameGrid" class="game-grid"></div>
+        </div>
+        <div class="game-clue-list" id="gameClueList"></div>
+      </div>
+    </section>
+
+    <!-- Écran 4 : résultat -->
+    <section class="game-panel" id="screenResult" hidden>
+      <h2>🎉 Grille terminée !</h2>
+      <div class="game-result-stats">
+        <div class="game-result-stat"><span id="resultScore">0</span><label>points</label></div>
+        <div class="game-result-stat"><span id="resultTime">0:00</span><label>temps</label></div>
+        <div class="game-result-stat"><span id="resultHints">0</span><label>aides utilisées</label></div>
+      </div>
+      <p class="game-hint" id="resultRank"></p>
+      <div class="game-leaderboard-list" id="resultLeaderboard"></div>
+      <button type="button" class="btn-primary" id="replayBtn" style="margin-top:16px">Rejouer</button>
+    </section>
+
+  </main>
+
+  <script src="config.js"></script>
+  <script src="game-data.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
