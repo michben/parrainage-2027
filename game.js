@@ -111,7 +111,7 @@ document.getElementById('startGameBtn').addEventListener('click', startGame);
 async function fetchLeaderboard(level) {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 9000);
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
     const res = await fetch(`${API_BASE}/api/game/leaderboard?level=${level}`, { cache: 'no-store', signal: controller.signal });
     clearTimeout(timeoutId);
     if (!res.ok) throw new Error('bad status');
@@ -555,7 +555,7 @@ async function finishGame() {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 55000);
     const res = await fetch(`${API_BASE}/api/game/score`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
