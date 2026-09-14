@@ -149,19 +149,29 @@
   flex-shrink: 0;
 }
 .game-grid-hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; text-align: center; }
+/* Taille fluide : la grille ne depasse JAMAIS la largeur de l'ecran,
+   quel que soit le nombre de colonnes (jusqu'a 24 sur les grands
+   niveaux). Chaque case reste carree (aspect-ratio) et se retrecit
+   proportionnellement sur mobile, plutot que de forcer un defilement
+   horizontal impossible a deviner sur telephone. --grid-cols est
+   pose en JS (renderGrid) a partir de currentGrid.cols. */
 .game-grid {
+  --grid-cols: 15;
   display: grid;
+  grid-template-columns: repeat(var(--grid-cols), 1fr);
   gap: 2px;
   background: var(--border);
   border: 3px solid var(--game-purple);
   border-radius: 8px;
   overflow: hidden;
-  width: max-content;
+  width: 100%;
+  max-width: calc(var(--grid-cols) * 34px);
+  margin: 0 auto;
 }
 .game-cell {
   position: relative;
-  width: 32px;
-  height: 32px;
+  aspect-ratio: 1;
+  min-width: 0;
   background: var(--bg-elevated);
 }
 .game-cell.blocked { background: var(--text); opacity: 0.85; }
@@ -170,7 +180,7 @@
   height: 100%;
   border: none;
   text-align: center;
-  font-size: 16px;
+  font-size: clamp(9px, 3.4vw, 16px);
   font-weight: 800;
   text-transform: uppercase;
   background: transparent;
@@ -183,7 +193,7 @@
 .game-cell.active-cell { background: rgba(123,44,191,0.22); }
 .game-cell.correct input { color: var(--game-teal); }
 .game-cell.incorrect input { color: var(--game-pink); }
-.game-cell-number { position: absolute; top: 1px; left: 2px; font-size: 8px; font-weight: 700; color: var(--text-muted); pointer-events: none; }
+.game-cell-number { position: absolute; top: 1px; left: 2px; font-size: clamp(6px, 1.8vw, 8px); font-weight: 700; color: var(--text-muted); pointer-events: none; }
 
 /* Case de definition dediee (mots fleches) : grisee/coloree, flèche +
    texte, distincte des cases-lettres et des cases noires - conforme aux
@@ -200,9 +210,9 @@
   transition: background var(--transition);
 }
 .game-clue-cell:hover { background: linear-gradient(135deg, rgba(244,162,97,0.4), rgba(224,86,140,0.35)); }
-.game-clue-arrow { font-size: 11px; font-weight: 800; color: var(--game-orange); line-height: 1; }
+.game-clue-arrow { font-size: clamp(7px, 2.4vw, 11px); font-weight: 800; color: var(--game-orange); line-height: 1; }
 .game-clue-text {
-  font-size: 5.5px;
+  font-size: clamp(4.5px, 1.4vw, 5.5px);
   line-height: 1.1;
   color: var(--text);
   text-align: center;
@@ -230,6 +240,29 @@
 .game-result-stat:nth-child(2) span { color: var(--game-blue); }
 .game-result-stat:nth-child(3) span { color: var(--game-orange); }
 .game-result-stat label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* --- Compteur discret de joueurs en ligne --- */
+.online-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-faint);
+  padding: 5px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--border-light);
+}
+.online-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--game-teal, #2a9d8f);
+  box-shadow: 0 0 0 0 rgba(42,157,143,0.5);
+  animation: online-pulse 2.4s infinite;
+}
+@keyframes online-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(42,157,143,0.45); }
+  70% { box-shadow: 0 0 0 5px rgba(42,157,143,0); }
+  100% { box-shadow: 0 0 0 0 rgba(42,157,143,0); }
+}
 
 /* --- Connexion (email / telephone / X), en plus du pseudo libre --- */
 .auth-divider {
@@ -356,15 +389,12 @@
   #startGameBtn { width: 100%; }
   .game-play-body { flex-direction: column; }
   .game-play-topbar { justify-content: center; text-align: center; }
-  .game-cell { width: 26px; height: 26px; }
-  .game-cell input { font-size: 13px; }
-  .game-grid-scroll { max-height: 320px; width: 100%; }
+  .game-grid-scroll { max-height: 300px; width: 100%; }
+  .game-grid { max-width: 100%; }
   .game-clue-list { max-height: 240px; width: 100%; }
   .game-result-stat span { font-size: 26px; }
   .mystery-board { max-width: 100%; }
 }
 @media (max-width: 420px) {
-  .game-cell { width: 22px; height: 22px; }
-  .game-cell input { font-size: 11px; }
   .game-choice { font-size: 12px; padding: 8px 6px; }
 }

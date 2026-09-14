@@ -13,6 +13,34 @@ const SCORING = {
 };
 const LEVEL_LABELS = { facile: 'Facile', moyen: 'Moyen', difficile: 'Difficile' };
 
+// --- Compteur discret de joueurs en ligne (aucun compte requis) ---
+(function presenceLoop() {
+  let clientId = localStorage.getItem('gamePresenceId');
+  if (!clientId) {
+    clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
+    localStorage.setItem('gamePresenceId', clientId);
+  }
+  async function ping() {
+    try {
+      const res = await fetch(`${API_BASE}/api/presence/ping`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientId })
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const el = document.getElementById('onlineCount');
+      const numEl = document.getElementById('onlineCountNum');
+      if (el && numEl && Number.isFinite(data.online)) {
+        numEl.textContent = data.online;
+        el.hidden = false;
+      }
+    } catch (err) { /* silencieux : compteur non critique */ }
+  }
+  ping();
+  setInterval(ping, 45000);
+})();
+
 // Même thème que le site principal (le bouton lune/soleil écrit dans la
 // même clé localStorage, lue au chargement par un script inline).
 (function syncThemeIcon() {
@@ -445,6 +473,7 @@ function startGame() {
 function renderGrid() {
   const wrap = document.getElementById('gameGrid');
   wrap.style.gridTemplateColumns = `repeat(${currentGrid.cols}, 1fr)`;
+  wrap.style.setProperty('--grid-cols', currentGrid.cols);
   wrap.innerHTML = '';
   cellInputs = {};
 
