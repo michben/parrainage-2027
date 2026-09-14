@@ -1,8 +1,8 @@
 // ============================================================
 // Le jeu des présidents — mots croisés / mots fléchés
 // Grilles figées (game-data.js), aucune génération à la volée.
-// Deux layouts distincts par niveau : GAME_GRIDS[niveau].croises et
-// GAME_GRIDS[niveau].fleches, chacun respectant ses propres règles
+// GAME_GRIDS[niveau][mode] est un TABLEAU de variantes (une est tirée
+// au hasard à chaque partie), chacune respectant ses propres règles
 // (voir commentaire en tête de game-data.js).
 // ============================================================
 
@@ -339,9 +339,14 @@ document.querySelectorAll('#leaderboardLevelChoice .game-choice').forEach(btn =>
   });
 });
 
+function pickRandomVariant(level, mode) {
+  const variants = GAME_GRIDS[level][mode];
+  return variants[Math.floor(Math.random() * variants.length)];
+}
+
 function updateLevelInfo() {
   const s = SCORING[gameLevel];
-  const grid = GAME_GRIDS[gameLevel][gameMode];
+  const grid = GAME_GRIDS[gameLevel][gameMode][0];
   document.getElementById('levelInfo').textContent =
     `${grid.words.length} mots · ${s.base} points de base · ${s.maxLetterHints} indice(s) lettre, ${s.maxWordHints} indice(s) mot disponibles.`;
 }
@@ -442,7 +447,7 @@ function buildClueCellMeta(grid) {
 }
 
 function startGame() {
-  currentGrid = GAME_GRIDS[gameLevel][gameMode];
+  currentGrid = pickRandomVariant(gameLevel, gameMode);
   cellMeta = buildCellMeta(currentGrid);
   clueCellMeta = gameMode === 'fleches' ? buildClueCellMeta(currentGrid) : {};
   cellInputs = {};
